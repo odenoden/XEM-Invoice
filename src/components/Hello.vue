@@ -21,42 +21,67 @@
 </template>
 
 <script>
+import axios from 'axios';
+import Vue from 'vue';
+
+var tset = 0;
+
 export default {
   name: 'hello',
+
   data () {
     return {
       voucherNumber:  '',
       jpyPrice:       0,
       xemRate:        0,
       xemPrice:       0,
-      xembook_url:    'http://13.113.193.148/xembook/lastprice2.json',
+      xembookUrl:     'http://13.113.193.148/xembook/lastprice2.json',
+      poloniexUrl:    'https://poloniex.com/public?command=returnTicker',
       qrcodeShow:     false,
-      qrcodeUrl:      'http://chart.apis.google.com/chart?chs=180x180&cht=qr&chl='
+      qrcodeUrl:      'http://chart.apis.google.com/chart?chs=180x180&cht=qr&chl=',
+      ret: 0,
     }
   },
 
+  mounted () {
+    axios
+      .get('http://13.113.193.148/xembook/lastprice2.json')
+      .then(response => (this.xemRate = response.data.zaif))
+  },
+/*
   created () {
-    axios.get(this.xembook_url)
+        $.ajax({url: 'https://poloniex.com/public?command=returnTicker' ,type: 'GET',cache: false}).done(
+        function(res){
+          tset = res.BTC_BCN.last;
+          alert(tset);
+          ret = tset;
+          this.xemRate = ret;
+        }
+      );
+
+      sleep(10);
+      this.xemRate = ret;
+//      alert(this.ret.zaif);
+//      this.xemRate = this.ret.zaif;
+      
+    axios.get(this.xembookUrl)
     .then(function (response) {
-        app.xemRate = Number(response.data.zaif);
+      app.xemPrice = response.data.zaif;
     })
     .catch(function (error) {
-        console.log(error);
+      alert(error);
+      console.log(error);
     });
   },
-
+*/
+  updated () {
+  },
   methods: {
-
-    handleClick: function (message) {
-        alert(message) // [object HTMLButtonElement]
-    },
-
     getXEMPrice: function () {
         this.qrcodeShow = false;
         var googleQRcode = 'http://chart.apis.google.com/chart?chs=180x180&cht=qr&chl=';
         var address = 'NCPB4V625NAVKHGVOZRKTX6LAIEKVLK5C3QK6BHB';
         var nemInvoice = '{"v":2,"type":2,"data":{"addr":"' + address + '","amount":' + this.xemPrice * 1000000 + ',"msg":"' + this.voucherNumber + '"}}';
-
         this.qrcodeUrl = googleQRcode + nemInvoice;
         this.qrcodeShow = true;
         alert("XEM価格を固定し、注文用QRコードを出力します" );
