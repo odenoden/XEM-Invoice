@@ -14,9 +14,11 @@
     
     <h1>ご注文</h1>
     <p><button v-on:click="getXEMPrice()">現在価格で確定</button></p>
-    <p>{{ xemBTC }}{{ dolRate }}</p>
     <div v-if="qrcodeShow">
-        <img v-bind:src="qrcodeUrl" alt="xem請求書" width="180" height="180">
+        <img v-bind:src="qrcodeUrl" alt="xem請求書" width="250" height="250">
+    </div>
+    <div v-show="false">
+      <p>{{ xemBTC }}{{ dolRate }}</p>
     </div>
   </div>
 </template>
@@ -34,7 +36,7 @@ export default {
     return {
       voucherNumber:  '',
       jpyPrice:       0,
-      xemRate:        0,
+      xemRate:        'レート取得中・・・',
       xemPrice:       0,
       xembookUrl:     'http://13.113.193.148/xembook/lastprice2.json',
       poloniexUrl:    'https://poloniex.com/public?command=returnTicker',
