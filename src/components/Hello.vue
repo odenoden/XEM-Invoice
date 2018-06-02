@@ -14,6 +14,7 @@
     
     <h1>ご注文</h1>
     <p><button v-on:click="getXEMPrice()">現在価格で確定</button></p>
+    <p>{{ xemBTC }}{{ dolRate }}</p>
     <div v-if="qrcodeShow">
         <img v-bind:src="qrcodeUrl" alt="xem請求書" width="180" height="180">
     </div>
@@ -39,14 +40,20 @@ export default {
       poloniexUrl:    'https://poloniex.com/public?command=returnTicker',
       qrcodeShow:     false,
       qrcodeUrl:      'http://chart.apis.google.com/chart?chs=180x180&cht=qr&chl=',
-      ret: 0,
+      dolRate:        0,
+      xemBTC:         0,
     }
   },
 
   mounted () {
     axios
-      .get('http://13.113.193.148/xembook/lastprice2.json')
-      .then(response => (this.xemRate = response.data.zaif))
+      .get('https://poloniex.com/public?command=returnTicker')
+      .then(response => (this.xemBTC = response.data.BTC_XEM.last));
+    axios
+      .get('https://blockchain.info/ticker?cors=true')
+      .then(response => (this.dolRate = response.data.JPY.last));
+
+//    this.xemRate = this.xemBTC * this.dolRate;
   },
 /*
   created () {
@@ -75,6 +82,7 @@ export default {
   },
 */
   updated () {
+    this.xemRate = Math.round(this.xemBTC * this.dolRate * 1000000) / 1000000;
   },
   methods: {
     getXEMPrice: function () {
