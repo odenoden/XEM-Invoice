@@ -1,10 +1,12 @@
 <template>
   <div id="app">
     <header>
-      <span>Vue.js PWA</span>
+      <span>
+        <img src="./assets/nem_logo_WEB.png" alt="Vue.js PWA"  align="middle">
+        XEMReceiver for PWA
+      </span>
     </header>
     <main>
-      <img src="./assets/logo.png" alt="Vue.js PWA">
       <router-view></router-view>
     </main>
   </div>
@@ -29,14 +31,13 @@ body {
 }
 
 main {
-  text-align: center;
-  margin-top: 40px;
+  padding: 10px;
 }
 
 header {
   margin: 0;
-  height: 56px;
-  padding: 0 16px 0 24px;
+  height: 80px;
+  padding: 2px;
   background-color: #35495E;
   color: #ffffff;
 }
@@ -45,10 +46,10 @@ header span {
   display: block;
   position: relative;
   font-size: 20px;
-  line-height: 1;
+  line-height: 0;
   letter-spacing: .02em;
   font-weight: 400;
   box-sizing: border-box;
-  padding-top: 16px;
+  padding-top: 2px;
 }
 </style>

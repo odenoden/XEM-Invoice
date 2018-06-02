@@ -1,21 +1,22 @@
 <template>
   <div class="hello">
-    <h1>{{ msg }}</h1>
-    <h2>Essential Links</h2>
-    <ul>
-      <li><a href="https://vuejs.org" target="_blank" rel="noopener">Core Docs</a></li>
-      <li><a href="https://forum.vuejs.org" target="_blank" rel="noopener">Forum</a></li>
-      <li><a href="http://chat.vuejs.org/" target="_blank" rel="noopener">Vue Community Chat</a></li>
-      <li><a href="https://twitter.com/vuejs" target="_blank" rel="noopener">Twitter</a></li>
-      <li><a href="http://vuejs-templates.github.io/webpack/" target="_blank" rel="noopener">Docs for This Template</a></li>
-    </ul>
-    <h2>Ecosystem</h2>
-    <ul>
-      <li><a href="http://router.vuejs.org/" target="_blank" rel="noopener">vue-router</a></li>
-      <li><a href="http://vuex.vuejs.org/" target="_blank" rel="noopener">vuex</a></li>
-      <li><a href="http://vue-loader.vuejs.org/" target="_blank" rel="noopener">vue-loader</a></li>
-      <li><a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">awesome-vue</a></li>
-    </ul>
+    <h1>注文情報</h1>
+    <h2>伝票番号</h2>
+    <input v-model="voucherNumber">
+    <h2>価格(JPY)</h2>
+    <input v-model="jpyPrice">
+
+    <h1>価格情報</h1>
+    <h2>現在のレート</h2>
+    <p>{{ xemRate }} 円 / XEM</p>
+    <h2>XEM価格(参考値)</h2>
+    <p>{{ xemPrice = Math.round(jpyPrice / xemRate * 1000000) / 1000000 }} XEM</p>
+    
+    <h1>ご注文</h1>
+    <p><button v-on:click="getXEMPrice()">現在価格で確定</button></p>
+    <div v-if="qrcodeShow">
+        <img v-bind:src="qrcodeUrl" alt="xem請求書" width="180" height="180">
+    </div>
   </div>
 </template>
 
@@ -24,7 +25,41 @@ export default {
   name: 'hello',
   data () {
     return {
-      msg: 'Welcome to Your Vue.js PWA'
+      voucherNumber:  '',
+      jpyPrice:       0,
+      xemRate:        0,
+      xemPrice:       0,
+      xembook_url:    'http://13.113.193.148/xembook/lastprice2.json',
+      qrcodeShow:     false,
+      qrcodeUrl:      'http://chart.apis.google.com/chart?chs=180x180&cht=qr&chl='
+    }
+  },
+
+  created () {
+    axios.get(this.xembook_url)
+    .then(function (response) {
+        app.xemRate = Number(response.data.zaif);
+    })
+    .catch(function (error) {
+        console.log(error);
+    });
+  },
+
+  methods: {
+
+    handleClick: function (message) {
+        alert(message) // [object HTMLButtonElement]
+    },
+
+    getXEMPrice: function () {
+        this.qrcodeShow = false;
+        var googleQRcode = 'http://chart.apis.google.com/chart?chs=180x180&cht=qr&chl=';
+        var address = 'NCPB4V625NAVKHGVOZRKTX6LAIEKVLK5C3QK6BHB';
+        var nemInvoice = '{"v":2,"type":2,"data":{"addr":"' + address + '","amount":' + this.xemPrice * 1000000 + ',"msg":"' + this.voucherNumber + '"}}';
+
+        this.qrcodeUrl = googleQRcode + nemInvoice;
+        this.qrcodeShow = true;
+        alert("XEM価格を固定し、注文用QRコードを出力します" );
     }
   }
 }
