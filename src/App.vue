@@ -3,7 +3,7 @@
     <header>
       <span>
         <img src="./assets/nem_logo_WEB.png" alt="Vue.js PWA"  align="middle">
-        XEMReceiver for PWA
+        XEM Invoice
       </span>
     </header>
     <main>
