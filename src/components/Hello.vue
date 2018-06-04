@@ -1,25 +1,50 @@
 <template>
   <div class="hello">
-    <h1>注文情報</h1>
-    <h2>伝票番号</h2>
-    <input v-model="voucherNumber">
-    <h2>価格(JPY)</h2>
-    <input v-model="jpyPrice">
+    <main role="main" class="container">
 
-    <h1>価格情報</h1>
-    <h2>現在のレート</h2>
-    <p>{{ xemRate }} 円 / XEM</p>
-    <h2>XEM価格(参考値)</h2>
-    <p>{{ xemPrice = Math.round(jpyPrice / xemRate * 1000000) / 1000000 }} XEM</p>
-    
-    <h1>ご注文</h1>
-    <p><button v-on:click="getXEMPrice()">現在価格で確定</button></p>
-    <div v-if="qrcodeShow">
-        <img v-bind:src="qrcodeUrl" alt="xem請求書" width="250" height="250">
-    </div>
-    <div v-show="false">
-      <p>{{ xemBTC }}{{ dolRate }}</p>
-    </div>
+      <div class="card-deck mb-3">
+        <div class="card mb-4 box-shadow">
+          <div class="card-header">
+            <h4 class="my-0 font-weight-normal">販売金額入力</h4>
+          </div>
+          <div class="card-body">
+            <form>
+              <div class="form-group">
+                <label for="formGroupExampleInput2">価格(JPY)</label>
+                <input v-model="jpyPrice" type="text" class="form-control" id="formGroupExampleInput2" placeholder="商品の日本円価格を入力して下さい">
+              </div>
+              <div class="form-group">
+                <label for="formGroupExampleInput">現在のレート</label>
+                <p>{{ xemRate }} 円 / XEM</p>
+              </div>
+              <div class="form-group">
+                <label for="formGroupExampleInput2">価格(XEM)</label>
+                <!-- <input type="text" readonly class="form-control-plaintext" id="staticEmail" value="email@example.com"> -->
+                <p>{{ xemPrice = Math.round(jpyPrice / xemRate * 1000000) / 1000000 }} XEM</p>
+              </div>
+
+              <button v-on:click="getXEMPrice()" type="submit" class="btn btn-primary mb-2">請求書を作成</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="card mb-4 box-shadow">
+          <div class="card-header">
+            <h4 class="my-0 font-weight-normal">請求書</h4>
+          </div>
+          <div class="card-body">
+            「請求書を作成」ボタンをクリックすると、QRコードが表示されます。
+            <div v-if="qrcodeShow">
+                <img v-bind:src="qrcodeUrl" alt="xem請求書" width="250" height="250">
+            </div>
+            <div v-show="false">
+              <p>{{ xemBTC }}{{ dolRate }}</p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </main><!-- /.container -->
   </div>
 </template>
 
@@ -34,7 +59,6 @@ export default {
 
   data () {
     return {
-      voucherNumber:  '',
       jpyPrice:       0,
       xemRate:        'レート取得中・・・',
       xemPrice:       0,
@@ -54,44 +78,22 @@ export default {
     axios
       .get('https://blockchain.info/ticker?cors=true')
       .then(response => (this.dolRate = response.data.JPY.last));
-
-//    this.xemRate = this.xemBTC * this.dolRate;
   },
-/*
-  created () {
-        $.ajax({url: 'https://poloniex.com/public?command=returnTicker' ,type: 'GET',cache: false}).done(
-        function(res){
-          tset = res.BTC_BCN.last;
-          alert(tset);
-          ret = tset;
-          this.xemRate = ret;
-        }
-      );
 
-      sleep(10);
-      this.xemRate = ret;
-//      alert(this.ret.zaif);
-//      this.xemRate = this.ret.zaif;
-      
-    axios.get(this.xembookUrl)
-    .then(function (response) {
-      app.xemPrice = response.data.zaif;
-    })
-    .catch(function (error) {
-      alert(error);
-      console.log(error);
-    });
-  },
-*/
   updated () {
-    this.xemRate = Math.round(this.xemBTC * this.dolRate * 1000000) / 1000000;
+    if (this.xemBTC != 0) {
+      if (this.dolRate != 0) {
+        this.xemRate = Math.round(this.xemBTC * this.dolRate * 1000000) / 1000000;
+      }
+    }
   },
+
   methods: {
     getXEMPrice: function () {
         this.qrcodeShow = false;
         var googleQRcode = 'http://chart.apis.google.com/chart?chs=180x180&cht=qr&chl=';
         var address = 'NCPB4V625NAVKHGVOZRKTX6LAIEKVLK5C3QK6BHB';
-        var nemInvoice = '{"v":2,"type":2,"data":{"addr":"' + address + '","amount":' + this.xemPrice * 1000000 + ',"msg":"' + this.voucherNumber + '"}}';
+        var nemInvoice = '{"v":2,"type":2,"data":{"addr":"' + address + '","amount":' + this.xemPrice * 1000000 + ',"msg":""}}';
         this.qrcodeUrl = googleQRcode + nemInvoice;
         this.qrcodeShow = true;
         alert("XEM価格を固定し、注文用QRコードを出力します" );
