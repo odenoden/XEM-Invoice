@@ -5,13 +5,13 @@
       <div class="card-deck mb-3">
         <div class="card mb-4 box-shadow">
           <div class="card-header">
-            <h4 class="my-0 font-weight-normal">販売金額入力</h4>
+            <h4 class="my-0 font-weight-normal">販売価格入力</h4>
           </div>
           <div class="card-body">
             <form>
               <div class="form-group">
                 <label for="formGroupExampleInput2">価格(JPY)</label>
-                <input v-model="jpyPrice" type="text" class="form-control" id="formGroupExampleInput2" placeholder="商品の日本円価格を入力して下さい">
+                <input v-model="jpyPrice" type="text" class="form-control" id="formGroupExampleInput2" placeholder="日本円価格を入力して下さい">
               </div>
               <div class="form-group">
                 <label for="formGroupExampleInput">現在のレート</label>
@@ -22,9 +22,8 @@
                 <!-- <input type="text" readonly class="form-control-plaintext" id="staticEmail" value="email@example.com"> -->
                 <p>{{ xemPrice = Math.round(jpyPrice / xemRate * 1000000) / 1000000 }} XEM</p>
               </div>
-
-              <button v-on:click="getXEMPrice()" type="submit" class="btn btn-primary mb-2">請求書を作成</button>
             </form>
+            <button v-on:click="getXEMPrice()" class="btn btn-primary mb-2">請求書を作成</button>
           </div>
         </div>
 
@@ -96,7 +95,7 @@ export default {
         var nemInvoice = '{"v":2,"type":2,"data":{"addr":"' + address + '","amount":' + this.xemPrice * 1000000 + ',"msg":""}}';
         this.qrcodeUrl = googleQRcode + nemInvoice;
         this.qrcodeShow = true;
-        alert("XEM価格を固定し、注文用QRコードを出力します" );
+        alert("請求書用のQRコードを出力します" );
     }
   }
 }
