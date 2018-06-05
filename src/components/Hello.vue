@@ -9,6 +9,14 @@
             <div class="card-body">
               <form>
                 <div class="form-group">
+                  <label for="formGroupExampleInput2">入金先</label>
+                  <input v-model="nemAddress" type="text" class="form-control" id="formGroupExampleInput2" placeholder="NEMのアドレスを入力して下さい">
+                </div>
+                <div class="form-group">
+                  <label for="formGroupExampleInput2">メッセージ</label>
+                  <input v-model="tranMessage" type="text" class="form-control" id="formGroupExampleInput2" placeholder="(任意)入金時のメッセージを入力して下さい">
+                </div>
+                <div class="form-group">
                   <label for="formGroupExampleInput2">価格(JPY)</label>
                   <input v-model="jpyPrice" type="text" class="form-control" id="formGroupExampleInput2" placeholder="日本円価格を入力して下さい">
                 </div>
@@ -107,10 +115,14 @@ export default {
       qrcodeUrl:      'http://chart.apis.google.com/chart?chs=180x180&cht=qr&chl=',
       dolRate:        0,
       xemBTC:         0,
+      nemAddress:     '',
+      tranMessage:    '',
     }
   },
 
   mounted () {
+    this.nemAddress = localStorage.getItem("lastNemAddress");
+
     axios
       .get('https://poloniex.com/public?command=returnTicker')
       .then(response => (this.xemBTC = response.data.BTC_XEM.last));
@@ -128,13 +140,19 @@ export default {
   },
 
   methods: {
+    testBtn: function () {
+      localStorage.setItem("Hashikawa", "Artistic");
+    },
     getXEMPrice: function () {
         this.qrcodeShow = false;
         var googleQRcode = 'http://chart.apis.google.com/chart?chs=180x180&cht=qr&chl=';
-        var address = 'NCPB4V625NAVKHGVOZRKTX6LAIEKVLK5C3QK6BHB';
-        var nemInvoice = '{"v":2,"type":2,"data":{"addr":"' + address + '","amount":' + this.xemPrice * 1000000 + ',"msg":""}}';
+        //var address = 'NCPB4V625NAVKHGVOZRKTX6LAIEKVLK5C3QK6BHB';
+        var nemInvoice = '{"v":2,"type":2,"data":{"addr":"' + this.nemAddress + '","amount":' + this.xemPrice * 1000000 + ',"msg":"' + this.tranMessage + '"}}';
         this.qrcodeUrl = googleQRcode + nemInvoice;
         this.qrcodeShow = true;
+
+        localStorage.setItem("lastNemAddress", this.nemAddress);
+
         alert("請求書用のQRコードを出力します" );
     }
   }
@@ -143,21 +161,4 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style>
-h1, h2 {
-  font-weight: normal;
-}
-
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-
-a {
-  color: #35495E;
-}
 </style>
