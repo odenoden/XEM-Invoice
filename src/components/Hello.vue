@@ -2,47 +2,87 @@
   <div class="hello">
     <main role="main" class="container">
 
-      <div class="card-deck mb-3">
-        <div class="card mb-4 box-shadow">
-          <div class="card-header">
-            <h4 class="my-0 font-weight-normal">販売価格入力</h4>
-          </div>
-          <div class="card-body">
-            <form>
-              <div class="form-group">
-                <label for="formGroupExampleInput2">価格(JPY)</label>
-                <input v-model="jpyPrice" type="text" class="form-control" id="formGroupExampleInput2" placeholder="日本円価格を入力して下さい">
-              </div>
-              <div class="form-group">
-                <label for="formGroupExampleInput">現在のレート</label>
-                <p>{{ xemRate }} 円 / XEM</p>
-              </div>
-              <div class="form-group">
-                <label for="formGroupExampleInput2">価格(XEM)</label>
-                <!-- <input type="text" readonly class="form-control-plaintext" id="staticEmail" value="email@example.com"> -->
-                <p>{{ xemPrice = Math.round(jpyPrice / xemRate * 1000000) / 1000000 }} XEM</p>
-              </div>
-            </form>
-            <button v-on:click="getXEMPrice()" class="btn btn-primary mb-2">請求書を作成</button>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="card border-secondary mb-3">
+            <h5 class="card-header">販売価格入力</h5>
+            <div class="card-body">
+              <form>
+                <div class="form-group">
+                  <label for="formGroupExampleInput2">価格(JPY)</label>
+                  <input v-model="jpyPrice" type="text" class="form-control" id="formGroupExampleInput2" placeholder="日本円価格を入力して下さい">
+                </div>
+                <div class="form-group">
+                  <label for="formGroupExampleInput">現在のレート</label>
+                  <p>{{ xemRate }} 円 / XEM</p>
+                </div>
+                <div class="form-group">
+                  <label for="formGroupExampleInput2">価格(XEM)</label>
+                  <!-- <input type="text" readonly class="form-control-plaintext" id="staticEmail" value="email@example.com"> -->
+                  <p>{{ xemPrice = Math.round(jpyPrice / xemRate * 1000000) / 1000000 }} XEM</p>
+                </div>
+              </form>
+              <button v-on:click="getXEMPrice()" class="btn btn-primary mb-2">請求書を作成</button>
+            </div>
           </div>
         </div>
-
-        <div class="card mb-4 box-shadow">
-          <div class="card-header">
-            <h4 class="my-0 font-weight-normal">請求書</h4>
-          </div>
-          <div class="card-body">
-            「請求書を作成」ボタンをクリックすると、QRコードが表示されます。
-            <div v-if="qrcodeShow">
-                <img v-bind:src="qrcodeUrl" alt="xem請求書" width="250" height="250">
+        <div class="col-md-6">
+            <div class="card border-secondary mb-3">
+            <h5 class="card-header">請求書</h5>
+            <div class="card-body">
+              「請求書を作成」ボタンをクリックするとQRコードが表示されます。
+              <div v-if="qrcodeShow" class="text-center">
+                  <img v-bind:src="qrcodeUrl" alt="xem請求書" width="250" height="250">
+              </div>
+              <div v-show="false">
+                <p>{{ xemBTC }}{{ dolRate }}</p>
+              </div>
             </div>
-            <div v-show="false">
-              <p>{{ xemBTC }}{{ dolRate }}</p>
-            </div>
-
           </div>
         </div>
       </div>
+
+      <div class="card border-secondary mb-3">
+        <div class="card-header">
+          <h5>ダッシュボード</h5>
+          <ul class="nav nav-tabs card-header-tabs">
+            <li class="nav-item">
+              <a href="#tab1" class="nav-link active" data-toggle="tab">承認済み</a>
+            </li>
+            <li class="nav-item">
+              <a href="#tab2" class="nav-link" data-toggle="tab">未承認</a>
+            </li>
+          </ul>
+        </div>
+        <div class="card-body">
+          <div class="tab-content">
+            <div id="tab1" class="tab-pane active">
+              <table class="table table-hover">
+                <thead class="thead-light">
+                  <tr>
+                    <th scope="col">アカウント</th>
+                    <th scope="col">量</th>
+                    <th scope="col">メッセージ</th>
+                    <th scope="col">日時</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>XXXXXXXXXX</td>
+                    <td>10.000000</td>
+                    <td>20180605-000001</td>
+                    <td>2018/06/05 11:00</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div id="tab2" class="tab-pane">
+              未承認・・・
+            </div>
+          </div>
+        </div>
+      </div>
+
     </main><!-- /.container -->
   </div>
 </template>
