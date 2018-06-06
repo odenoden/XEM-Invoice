@@ -69,14 +69,12 @@
                 <thead class="thead-light">
                   <tr>
                     <th scope="col">日時</th>
-                    <th scope="col">区分</th>
                     <th scope="col">量</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="entry in accountTransfers">
-                    <td>{{dispTimeStamp(entry.transaction.timeStamp)}}</td>
-                    <td>入金</td>
+                    <td>[入金] {{dispTimeStamp(entry.transaction.timeStamp)}}</td>
                     <td>{{entry.transaction.amount / 1000000}}</td>
                   </tr>
                   <tr>
@@ -86,9 +84,6 @@
             </div>
             <div id="tab2" class="tab-pane">
               未承認・・・
-            <ol>
-              <li v-for="item in list">{{ item }}</li>
-            </ol>
             </div>
           </div>
         </div>
@@ -125,7 +120,6 @@ export default {
 
   data () {
     return {
-      list: ['りんご', 'ばなな', 'いちご'],
       jpyPrice:       0,
       xemRate:        'レート取得中・・・',
       xemPrice:       0,
@@ -163,6 +157,7 @@ export default {
     if (this.xemBTC != 0) {
       if (this.dolRate != 0) {
         this.xemRate = Math.round(this.xemBTC * this.dolRate * 1000000) / 1000000;
+        alert(JSON.stringify(this.accountTransfers[0].transaction));
       }
     }
   },
@@ -171,7 +166,6 @@ export default {
     getXEMPrice: function () {
         this.qrcodeShow = false;
         var googleQRcode = 'http://chart.apis.google.com/chart?chs=180x180&cht=qr&chl=';
-        //var address = 'NCPB4V625NAVKHGVOZRKTX6LAIEKVLK5C3QK6BHB';
         var nemInvoice = '{"v":2,"type":2,"data":{"addr":"' + this.nemAddress + '","amount":' + this.xemPrice * 1000000 + ',"msg":"' + this.tranMessage + '"}}';
         this.qrcodeUrl = googleQRcode + nemInvoice;
         this.qrcodeShow = true;
@@ -180,7 +174,8 @@ export default {
 
         alert("請求書用のQRコードを出力します" );
     },
-    dispTimeStamp: function(timeStamp){
+
+dispTimeStamp: function(timeStamp){
       var NEM_EPOCH = Date.UTC(2015, 2, 29, 0, 6, 25, 0);
       const d = new Date(NEM_EPOCH + (timeStamp * 1000));
       return d.toLocaleString();
