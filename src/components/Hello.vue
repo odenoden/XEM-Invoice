@@ -151,13 +151,14 @@ export default {
         .get(tranApi)
         .then(response => (this.accountTransfers = response.data.data));
     }
+    alert(JSON.stringify(this.accountTransfers));
+    alert(tranApi);
   },
 
   updated () {
     if (this.xemBTC != 0) {
       if (this.dolRate != 0) {
         this.xemRate = Math.round(this.xemBTC * this.dolRate * 1000000) / 1000000;
-        alert(JSON.stringify(this.accountTransfers[0].transaction));
       }
     }
   },
