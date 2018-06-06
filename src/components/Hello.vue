@@ -68,24 +68,27 @@
               <table class="table table-hover">
                 <thead class="thead-light">
                   <tr>
-                    <th scope="col">アカウント</th>
-                    <th scope="col">量</th>
-                    <th scope="col">メッセージ</th>
                     <th scope="col">日時</th>
+                    <th scope="col">区分</th>
+                    <th scope="col">量</th>
                   </tr>
                 </thead>
                 <tbody>
+                  <tr v-for="entry in accountTransfers">
+                    <td>{{dispTimeStamp(entry.transaction.timeStamp)}}</td>
+                    <td>入金</td>
+                    <td>{{entry.transaction.amount / 1000000}}</td>
+                  </tr>
                   <tr>
-                    <td>XXXXXXXXXX</td>
-                    <td>10.000000</td>
-                    <td>20180605-000001</td>
-                    <td>2018/06/05 11:00</td>
                   </tr>
                 </tbody>
               </table>
             </div>
             <div id="tab2" class="tab-pane">
               未承認・・・
+            <ol>
+              <li v-for="item in list">{{ item }}</li>
+            </ol>
             </div>
           </div>
         </div>
@@ -98,14 +101,31 @@
 <script>
 import axios from 'axios';
 import Vue from 'vue';
+//import {AccountHttp, NEMLibrary, NetworkTypes, Address} from "nem-library";
 
-var tset = 0;
+var NODES = Array(
+"alice2.nem.ninja",
+"alice3.nem.ninja",
+"alice4.nem.ninja",
+"alice5.nem.ninja",
+"alice6.nem.ninja",
+"alice7.nem.ninja"
+);
+
+var defaultPort = ":7890";
+
+var getAccountTransfersURL = function(address){
+    var targetNode =  NODES[Math.floor(Math.random() * NODES.length)] + defaultPort;
+    var apl = "http://" + targetNode + "/account/transfers/all?address=" + address;
+    return apl;
+}
 
 export default {
   name: 'hello',
 
   data () {
     return {
+      list: ['りんご', 'ばなな', 'いちご'],
       jpyPrice:       0,
       xemRate:        'レート取得中・・・',
       xemPrice:       0,
@@ -117,6 +137,7 @@ export default {
       xemBTC:         0,
       nemAddress:     '',
       tranMessage:    '',
+      accountTransfers: [],
     }
   },
 
@@ -129,6 +150,13 @@ export default {
     axios
       .get('https://blockchain.info/ticker?cors=true')
       .then(response => (this.dolRate = response.data.JPY.last));
+
+    if (this.nemAddress != '') {
+      var tranApi = getAccountTransfersURL(this.nemAddress);
+      axios
+        .get(tranApi)
+        .then(response => (this.accountTransfers = response.data.data));
+    }
   },
 
   updated () {
@@ -140,9 +168,6 @@ export default {
   },
 
   methods: {
-    testBtn: function () {
-      localStorage.setItem("Hashikawa", "Artistic");
-    },
     getXEMPrice: function () {
         this.qrcodeShow = false;
         var googleQRcode = 'http://chart.apis.google.com/chart?chs=180x180&cht=qr&chl=';
@@ -154,6 +179,11 @@ export default {
         localStorage.setItem("lastNemAddress", this.nemAddress);
 
         alert("請求書用のQRコードを出力します" );
+    },
+    dispTimeStamp: function(timeStamp){
+      var NEM_EPOCH = Date.UTC(2015, 2, 29, 0, 6, 25, 0);
+      const d = new Date(NEM_EPOCH + (timeStamp * 1000));
+      return d.toLocaleString();
     }
   }
 }
