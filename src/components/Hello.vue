@@ -5,7 +5,7 @@
       <div class="row">
         <div class="col-md-6">
           <div class="card border-secondary mb-3">
-            <h5 class="card-header">販売価格入力</h5>
+            <h5 class="card-header">請求価格入力</h5>
             <div class="card-body">
               <form>
                 <div class="form-group">
@@ -147,9 +147,13 @@ export default {
 
     if (this.nemAddress != '') {
       var tranApi = getAccountTransfersURL(this.nemAddress);
-      axios
-        .get(tranApi)
-        .then(response => (this.accountTransfers = response.data.data));
+
+      axios.get(tranApi)
+        .then((response) => {
+          this.accountTransfers = response.data.data;
+        })
+        .catch( error => { alert(error);
+      });
     }
     alert(tranApi);
   },
