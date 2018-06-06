@@ -99,19 +99,16 @@ import Vue from 'vue';
 //import {AccountHttp, NEMLibrary, NetworkTypes, Address} from "nem-library";
 
 var NODES = Array(
-"alice2.nem.ninja",
-"alice3.nem.ninja",
-"alice4.nem.ninja",
-"alice5.nem.ninja",
-"alice6.nem.ninja",
-"alice7.nem.ninja"
+"aqualife1.supernode.me",
+"aqualife2.supernode.me",
+"aqualife3.supernode.me",
 );
 
-var defaultPort = ":7890";
+var defaultPort = ":7891";
 
 var getAccountTransfersURL = function(address){
     var targetNode =  NODES[Math.floor(Math.random() * NODES.length)] + defaultPort;
-    var apl = "http://" + targetNode + "/account/transfers/all?address=" + address;
+    var apl = "https://" + targetNode + "/account/transfers/all?address=" + address;
     return apl;
 }
 
@@ -155,13 +152,11 @@ export default {
         .catch( error => { alert(error);
       });
     }
-    alert(tranApi);
   },
 
   updated () {
     if (this.xemBTC != 0) {
       if (this.dolRate != 0) {
-        alert(JSON.stringify(this.accountTransfers));
         this.xemRate = Math.round(this.xemBTC * this.dolRate * 1000000) / 1000000;
       }
     }
