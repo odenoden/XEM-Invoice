@@ -84,7 +84,7 @@
                 </thead>
                 <tbody>
                   <tr v-for="entry in dashbord">
-                    <td style="max-width:7em">{{dispTimeStamp(entry.timeStamp)}}</td>
+                    <td style="max-width:6em">{{dispTimeStamp(entry.timeStamp)}}</td>
                     <td>{{entry.type}}</td>
                     <td class="text-right"><a v-bind:href="entry.url" target="_blank">{{entry.amount}}</a></td>
                   </tr>
