@@ -9,12 +9,6 @@
       <div class="collapse navbar-collapse" id="navMenu">
         <ul class="navbar-nav mr-auto">
           <li class="nav-item">
-            <a class="nav-link disabled" href="#">販売管理</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link disabled" href="#">商品管理</a>
-          </li>
-          <li class="nav-item">
             <a class="nav-link" href="#">アドレス帳</a>
           </li>
           <li class="nav-item">

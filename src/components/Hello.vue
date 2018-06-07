@@ -3,44 +3,53 @@
     <main role="main" class="container">
 
       <div class="row">
+        <!-- 請求価格入力 -->
         <div class="col-md-6">
           <div class="card border-secondary mb-3">
             <h5 class="card-header">請求価格入力</h5>
             <div class="card-body">
               <form>
                 <div class="form-group">
-                  <label for="formGroupExampleInput2">入金先</label>
+                  <label>入金先</label>
                   <input v-model="nemAddress" type="text" class="form-control" id="formGroupExampleInput2" placeholder="NEMのアドレスを入力して下さい">
                 </div>
                 <div class="form-group">
-                  <label for="formGroupExampleInput2">メッセージ</label>
+                  <label>メッセージ</label>
                   <input v-model="tranMessage" type="text" class="form-control" id="formGroupExampleInput2" placeholder="(任意)入金時のメッセージを入力して下さい">
                 </div>
                 <div class="form-group">
-                  <label for="formGroupExampleInput2">価格(JPY)</label>
+                  <label>価格(JPY)</label>
                   <input v-model="jpyPrice" type="text" class="form-control" id="formGroupExampleInput2" placeholder="日本円価格を入力して下さい">
-                </div>
-                <div class="form-group">
-                  <label for="formGroupExampleInput">現在のレート</label>
-                  <p>{{ xemRate }} 円 / XEM</p>
-                </div>
-                <div class="form-group">
-                  <label for="formGroupExampleInput2">価格(XEM)</label>
-                  <!-- <input type="text" readonly class="form-control-plaintext" id="staticEmail" value="email@example.com"> -->
-                  <p>{{ xemPrice = Math.round(jpyPrice / xemRate * 1000000) / 1000000 }} XEM</p>
                 </div>
               </form>
               <button v-on:click="getXEMPrice()" class="btn btn-primary mb-2">請求書を作成</button>
             </div>
           </div>
         </div>
+        <!-- 請求書 -->
         <div class="col-md-6">
             <div class="card border-secondary mb-3">
             <h5 class="card-header">請求書</h5>
             <div class="card-body">
-              「請求書を作成」ボタンをクリックするとQRコードが表示されます。
+              <div class="row">
+                <div class="col-md-4">
+                  現在のレート
+                </div>
+                <div class="col-md-8">
+                  <p>{{ xemRate }} 円 / XEM</p>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-4">
+                  価格(XEM)
+                </div>
+                <div class="col-md-8">
+                  <p>{{ xemPrice }} XEM</p>
+                </div>
+              </div>
+              <!-- QRコードを表示 -->
               <div v-if="qrcodeShow" class="text-center">
-                  <img v-bind:src="qrcodeUrl" alt="xem請求書" width="250" height="250">
+                  <img v-bind:src="qrcodeUrl" alt="xem請求書" width="200" height="200">
               </div>
               <div v-show="false">
                 <p>{{ xemBTC }}{{ dolRate }}</p>
@@ -69,21 +78,19 @@
                 <thead class="thead-light">
                   <tr>
                     <th scope="col">日時</th>
-                    <th scope="col">量</th>
+                    <th scope="col">金額</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="entry in accountTransfers">
-                    <td>[入金] {{dispTimeStamp(entry.transaction.timeStamp)}}</td>
-                    <td>{{entry.transaction.amount / 1000000}}</td>
-                  </tr>
-                  <tr>
+                  <tr v-for="entry in dashbord">
+                    <td>{{entry.type}} {{dispTimeStamp(entry.timeStamp)}}</td>
+                    <td class="text-right">{{entry.amount}}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
             <div id="tab2" class="tab-pane">
-              未承認・・・
+              開発中・・・。リリースまでしばらく待ってね。
             </div>
           </div>
         </div>
@@ -96,7 +103,7 @@
 <script>
 import axios from 'axios';
 import Vue from 'vue';
-//import {AccountHttp, NEMLibrary, NetworkTypes, Address} from "nem-library";
+import { isNull } from 'util';
 
 var NODES = Array(
 "aqualife1.supernode.me",
@@ -129,35 +136,65 @@ export default {
       nemAddress:     '',
       tranMessage:    '',
       accountTransfers: [],
+      dashbord:         [],
     }
   },
 
-  mounted () {
+  async created () {
+    // ユーザーが前回入力した値を取得
     this.nemAddress = localStorage.getItem("lastNemAddress");
 
-    axios
-      .get('https://poloniex.com/public?command=returnTicker')
-      .then(response => (this.xemBTC = response.data.BTC_XEM.last));
-    axios
-      .get('https://blockchain.info/ticker?cors=true')
-      .then(response => (this.dolRate = response.data.JPY.last));
+    // poloniexからXEM/BTC価格を取得
+    try {
+      let res1 = await axios.get('https://poloniex.com/public?command=returnTicker')
+      let res2 = await axios.get('https://blockchain.info/ticker?cors=true')
 
-    if (this.nemAddress != '') {
+      this.xemBTC = res1.data.BTC_XEM.last
+      this.dolRate = res2.data.JPY.last
+
+      this.xemRate = Math.round(this.xemBTC * this.dolRate * 1000000) / 1000000;
+    } catch (e) {
+      console.error(e)
+    }
+
+    // トランザクションを取得
+    try {
       var tranApi = getAccountTransfersURL(this.nemAddress);
+      let res = await axios.get(tranApi)
+      this.accountTransfers = res.data.data
 
-      axios.get(tranApi)
-        .then((response) => {
-          this.accountTransfers = response.data.data;
-        })
-        .catch( error => { alert(error);
-      });
+      var arrLen = res.data.data.length;
+      for (var i = 0; i < arrLen; i++) {
+
+        var tran = this.accountTransfers[i].transaction;
+
+        var ts = tran.timeStamp;
+        var tp = '';
+        var am = 0;
+
+				if(this.nemAddress != tran.recipient){
+          var tp = '[出金]';
+          var am = '-' + ((tran.amount + tran.fee) / 1000000).toFixed(6);
+        } else {
+          var tp = '[入金]';
+          var am = '+' + (tran.amount / 1000000).toFixed(6);
+        }
+
+        this.dashbord.push({
+          timeStamp: ts,
+          type: tp,
+          amount: am
+        });
+      }
+    } catch (e) {
+      console.error(e)
     }
   },
 
   updated () {
     if (this.xemBTC != 0) {
       if (this.dolRate != 0) {
-        this.xemRate = Math.round(this.xemBTC * this.dolRate * 1000000) / 1000000;
+        this.xemPrice = Math.round(this.jpyPrice / this.xemRate * 1000000) / 1000000;
       }
     }
   },
@@ -175,7 +212,7 @@ export default {
         alert("請求書用のQRコードを出力します" );
     },
 
-dispTimeStamp: function(timeStamp){
+    dispTimeStamp: function(timeStamp){
       var NEM_EPOCH = Date.UTC(2015, 2, 29, 0, 6, 25, 0);
       const d = new Date(NEM_EPOCH + (timeStamp * 1000));
       return d.toLocaleString();
