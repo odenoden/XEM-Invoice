@@ -74,17 +74,19 @@
         <div class="card-body">
           <div class="tab-content">
             <div id="tab1" class="tab-pane active">
-              <table class="table table-hover">
+              <table class="table table-hover" style="max-width:30em">
                 <thead class="thead-light">
                   <tr>
                     <th scope="col">日時</th>
-                    <th scope="col">金額</th>
+                    <th scope="col">種別</th>
+                    <th scope="col">価格(XEM)</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="entry in dashbord">
-                    <td>{{entry.type}} {{dispTimeStamp(entry.timeStamp)}}</td>
-                    <td class="text-right">{{entry.amount}}</td>
+                    <td style="max-width:7em">{{dispTimeStamp(entry.timeStamp)}}</td>
+                    <td>{{entry.type}}</td>
+                    <td class="text-right"><a v-bind:href="entry.url" target="_blank">{{entry.amount}}</a></td>
                   </tr>
                 </tbody>
               </table>
@@ -167,24 +169,58 @@ export default {
       for (var i = 0; i < arrLen; i++) {
 
         var tran = this.accountTransfers[i].transaction;
+        var meta = this.accountTransfers[i].meta;
 
         var ts = tran.timeStamp;
         var tp = '';
         var am = 0;
+        var ul = '';
+        var tran_amount = 0;
 
-				if(this.nemAddress != tran.recipient){
-          var tp = '[出金]';
-          var am = '-' + ((tran.amount + tran.fee) / 1000000).toFixed(6);
-        } else {
-          var tp = '[入金]';
-          var am = '+' + (tran.amount / 1000000).toFixed(6);
+        if (tran.type == 4100) {
+          tran = tran.otherTrans;
         }
+      
+        if (tran.type == 257 || tran.type == 8193 ) {
 
-        this.dashbord.push({
-          timeStamp: ts,
-          type: tp,
-          amount: am
-        });
+          var has_mosaic = false;
+
+          //モザイクが存在した場合
+          if (tran.mosaics) {
+            tran.mosaics.forEach(function(key) {
+              has_mosaic = true;
+              var mosaic = key;
+              if (mosaic.mosaicId.name == "xem" && mosaic.mosaicId.namespaceId == "nem"){
+                tran_amount = mosaic.quantity;
+              }
+            });
+          }
+
+          //通常送金
+          if (!has_mosaic) {
+            if (tran.type == 8193 ) {
+              tran_amount = tran.rentalFee;
+            } else {
+              tran_amount = tran.amount;
+            }
+          }
+
+          if(this.nemAddress != tran.recipient){
+            var tp = '出金';
+            var am = '- ' + ((tran_amount + tran.fee) / 1000000).toFixed(6);
+          } else {
+            var tp = '入金';
+            var am = '+ ' + (tran_amount / 1000000).toFixed(6);
+          }
+          ul = 'http://explorer.nemchina.com/#/s_tx?hash=' + meta.hash.data;
+
+          this.dashbord.push({
+            timeStamp: ts,
+            type: tp,
+            amount: am,
+            url: ul
+          });
+        }
       }
     } catch (e) {
       console.error(e)
