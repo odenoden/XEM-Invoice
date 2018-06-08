@@ -92,7 +92,7 @@
         <div class="card-body">
           <div class="tab-content">
             <div id="tab1" class="tab-pane active">
-              <table class="table table-hover" style="max-width:30em">
+              <table class="table table-hover table-bordered table-sm" style="max-width:30em">
                 <thead class="thead-light text-center">
                   <tr>
                     <th scope="col">日時</th>
