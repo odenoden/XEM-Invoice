@@ -97,14 +97,13 @@
                   <tr>
                     <th scope="col">日時</th>
                     <th scope="col">価格(XEM)</th>
-                    <th scope="col"></th>
                   </tr>
                 </thead>
-                <tbody style="font-size:0.9em;margin:0px;padding:0px">
+                <tbody>
                   <tr v-for="entry in dashbord">
                     <td>{{dispTimeStamp(entry.timeStamp)}}</td>
-                    <td class="text-right" v-bind:class="entry.color">{{entry.amount}}</td>
-                    <td>
+                    <td class="text-right" v-bind:class="entry.color">
+                      {{entry.amount}}　
                       <a v-bind:href="entry.url" target="_blank">
                         <button class="btn btn-primary btn-sm">詳細</button>
                       </a>
