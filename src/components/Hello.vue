@@ -89,7 +89,7 @@
             </li>
           </ul>
         </div>
-        <div class="card-body">
+        <div class="card-body m-0 p-2">
           <div class="tab-content">
             <div id="tab1" class="tab-pane active">
               <table class="table table-hover table-bordered table-sm" style="max-width:30em">
@@ -97,13 +97,16 @@
                   <tr>
                     <th scope="col">日時</th>
                     <th scope="col">価格(XEM)</th>
+                    <th scope="col"></th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="entry in dashbord">
                     <td>{{dispTimeStamp(entry.timeStamp)}}</td>
                     <td class="text-right" v-bind:class="entry.color">
-                      {{entry.amount}}　
+                      {{entry.amount}}
+                    </td>
+                    <td class="text-center">
                       <a v-bind:href="entry.url" target="_blank">
                         <button class="btn btn-primary btn-sm">詳細</button>
                       </a>
