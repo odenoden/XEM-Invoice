@@ -100,7 +100,7 @@
                     <th scope="col"></th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody style="font-size:0.9em;margin:0px;padding:0px">
                   <tr v-for="entry in dashbord">
                     <td>{{dispTimeStamp(entry.timeStamp)}}</td>
                     <td class="text-right" v-bind:class="entry.color">{{entry.amount}}</td>
