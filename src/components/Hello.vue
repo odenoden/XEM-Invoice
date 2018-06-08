@@ -6,31 +6,49 @@
         <!-- 請求価格入力 -->
         <div class="col-md-6">
           <div class="card border-secondary mb-3">
-            <h5 class="card-header">請求価格入力</h5>
+            <div>
+              <h5 class="card-header">請求価格入力</h5>
+            </div>
             <div class="card-body">
-              <form>
+              <form @submit="getXEMPrice">
                 <div class="form-group">
-                  <label>入金先</label>
-                  <input v-model="nemAddress" type="text" class="form-control" id="formGroupExampleInput2" placeholder="NEMのアドレスを入力して下さい">
+                  <label>入金先</label><span class="help-block">（半角英数で40文字）</span>
+                  <input
+                    v-model="nemAddress"
+                    type="text"
+                    class="form-control"
+                    placeholder="(必須)NEMのアドレスを入力して下さい"
+                    pattern="^[0-9-A-Z]{40}"
+                    required>
                 </div>
                 <div class="form-group">
                   <label>メッセージ</label>
-                  <input v-model="tranMessage" type="text" class="form-control" id="formGroupExampleInput2" placeholder="(任意)入金時のメッセージを入力して下さい">
+                  <input v-model="tranMessage" type="text" class="form-control" placeholder="(任意)入金時のメッセージを入力して下さい">
                 </div>
                 <div class="form-group">
                   <label>価格(JPY)</label>
-                  <input v-model="jpyPrice" type="text" class="form-control" id="formGroupExampleInput2" placeholder="日本円価格を入力して下さい">
+                  <input v-model="jpyPrice" type="number" class="form-control" placeholder="(必須)日本円価格を入力して下さい" required>
                 </div>
+                <button type="submit" class="btn btn-primary mb-2">請求書を作成</button>
               </form>
-              <button v-on:click="getXEMPrice()" class="btn btn-primary mb-2">請求書を作成</button>
             </div>
           </div>
         </div>
         <!-- 請求書 -->
         <div class="col-md-6">
             <div class="card border-secondary mb-3">
-            <h5 class="card-header">請求書</h5>
+            <div>
+              <h5 class="card-header">請求書</h5>
+            </div>
             <div class="card-body">
+              <div class="row">
+                <div class="col-md-4">
+                 請求元
+                </div>
+                <div class="col-md-8">
+                  <p>{{ nemAddress }}</p>
+                </div>
+              </div>
               <div class="row">
                 <div class="col-md-4">
                   現在のレート
@@ -75,18 +93,22 @@
           <div class="tab-content">
             <div id="tab1" class="tab-pane active">
               <table class="table table-hover" style="max-width:30em">
-                <thead class="thead-light">
+                <thead class="thead-light text-center">
                   <tr>
                     <th scope="col">日時</th>
-                    <th scope="col">種別</th>
                     <th scope="col">価格(XEM)</th>
+                    <th scope="col"></th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="entry in dashbord">
-                    <td style="max-width:6em">{{dispTimeStamp(entry.timeStamp)}}</td>
-                    <td>{{entry.type}}</td>
-                    <td class="text-right"><a v-bind:href="entry.url" target="_blank">{{entry.amount}}</a></td>
+                    <td>{{dispTimeStamp(entry.timeStamp)}}</td>
+                    <td class="text-right" v-bind:class="entry.color">{{entry.amount}}</td>
+                    <td>
+                      <a v-bind:href="entry.url" target="_blank">
+                        <button class="btn btn-primary btn-sm">詳細</button>
+                      </a>
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -107,17 +129,29 @@ import axios from 'axios';
 import Vue from 'vue';
 import { isNull } from 'util';
 
-var NODES = Array(
-"aqualife1.supernode.me",
-"aqualife2.supernode.me",
-"aqualife3.supernode.me",
+const NODES = Array(
+  "https://aqualife2.supernode.me",
+  "https://aqualife3.supernode.me",
+  // "https://beny.supernode.me", 調子悪い？
+  "https://happy.supernode.me",
+  "https://mnbhsgwbeta.supernode.me",
+  // "https://nemstrunk.supernode.me", 調子悪い？
+  // "https://nemstrunk2.supernode.me", 調子悪い？
+  "https://nsm.supernode.me",
+  "https://kohkei.supernode.me",
+  "https://mttsukuba.supernode.me",
+  "https://strategic-trader-1.supernode.me",
+  "https://strategic-trader-2.supernode.me",
+  "https://shibuya.supernode.me",
+  "https://qora01.supernode.me",
+  "https://pegatennnag.supernode.me"
 );
 
 var defaultPort = ":7891";
 
 var getAccountTransfersURL = function(address){
     var targetNode =  NODES[Math.floor(Math.random() * NODES.length)] + defaultPort;
-    var apl = "https://" + targetNode + "/account/transfers/all?address=" + address;
+    var apl = targetNode + "/account/transfers/all?address=" + address;
     return apl;
 }
 
@@ -142,7 +176,7 @@ export default {
     }
   },
 
-  async created () {
+  async mounted () {
     // ユーザーが前回入力した値を取得
     this.nemAddress = localStorage.getItem("lastNemAddress");
 
@@ -163,8 +197,8 @@ export default {
     try {
       var tranApi = getAccountTransfersURL(this.nemAddress);
       let res = await axios.get(tranApi)
-      this.accountTransfers = res.data.data
 
+      this.accountTransfers = res.data.data
       var arrLen = res.data.data.length;
       for (var i = 0; i < arrLen; i++) {
 
@@ -175,6 +209,7 @@ export default {
         var tp = '';
         var am = 0;
         var ul = '';
+        var cl = "";
         var tran_amount = 0;
 
         if (tran.type == 4100) {
@@ -206,11 +241,13 @@ export default {
           }
 
           if(this.nemAddress != tran.recipient){
-            var tp = '出金';
-            var am = '- ' + ((tran_amount + tran.fee) / 1000000).toFixed(6);
+            tp = '出金';
+            am = '- ' + ((tran_amount + tran.fee) / 1000000).toFixed(6);
+            cl = "text-danger";
           } else {
-            var tp = '入金';
-            var am = '+ ' + (tran_amount / 1000000).toFixed(6);
+            tp = '入金';
+            am = '+ ' + (tran_amount / 1000000).toFixed(6);
+            cl = "text-success";
           }
           ul = 'http://explorer.nemchina.com/#/s_tx?hash=' + meta.hash.data;
 
@@ -218,12 +255,18 @@ export default {
             timeStamp: ts,
             type: tp,
             amount: am,
-            url: ul
+            url: ul,
+            color: cl
           });
         }
       }
-    } catch (e) {
-      console.error(e)
+    } catch (error) {
+      if(error.message == 'Request failed with status code 400'){
+          alert("入金先が正しくありません");
+      } else {
+        alert(error);
+        console.error(error)
+      }
     }
   },
 
