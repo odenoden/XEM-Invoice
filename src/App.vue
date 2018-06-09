@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <nav class="navbar navbar-dark bg-dark">
-      <a class="navbar-brand" href="#"><img src="./assets/nem_logo_WEB.png" alt="Vue.js PWA" align="middle">XEM Invoice</a>
+      <a class="navbar-brand" href="#"><img src="./assets/logo.png" alt="Vue.js PWA" align="middle">XEM Invoice</a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navMenu" aria-controls="navMenu" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>

@@ -1,5 +1,5 @@
 <template>
-  <div class="hello">
+  <div class="invoice">
     <main role="main" class="container">
 
       <div class="row">
@@ -102,11 +102,11 @@
                 </thead>
                 <tbody>
                   <tr v-for="entry in dashbord">
-                    <td>{{dispTimeStamp(entry.timeStamp)}}</td>
+                    <td style="max-width:6em">{{entry.timeStamp}}</td>
                     <td class="text-right" v-bind:class="entry.color">
                       {{entry.amount}}
                     </td>
-                    <td class="text-center">
+                    <td class="text-center" style="max-width:2em">
                       <a v-bind:href="entry.url" target="_blank">
                         <button class="btn btn-primary btn-sm">詳細</button>
                       </a>
@@ -130,50 +130,25 @@
 import axios from 'axios';
 import Vue from 'vue';
 import { isNull } from 'util';
+import nemWrapper from '@/js/nem_wrapper'
 
-const NODES = Array(
-  "https://aqualife2.supernode.me",
-  "https://aqualife3.supernode.me",
-  // "https://beny.supernode.me", 調子悪い？
-  "https://happy.supernode.me",
-  "https://mnbhsgwbeta.supernode.me",
-  // "https://nemstrunk.supernode.me", 調子悪い？
-  // "https://nemstrunk2.supernode.me", 調子悪い？
-  "https://nsm.supernode.me",
-  "https://kohkei.supernode.me",
-  "https://mttsukuba.supernode.me",
-  "https://strategic-trader-1.supernode.me",
-  "https://strategic-trader-2.supernode.me",
-  "https://shibuya.supernode.me",
-  "https://qora01.supernode.me",
-  "https://pegatennnag.supernode.me"
-);
-
-var defaultPort = ":7891";
-
-var getAccountTransfersURL = function(address){
-    var targetNode =  NODES[Math.floor(Math.random() * NODES.length)] + defaultPort;
-    var apl = targetNode + "/account/transfers/all?address=" + address;
-    return apl;
-}
+const URL_PLONIEX_API_TICKER = 'https://poloniex.com/public?command=returnTicker'
+const URL_FIAT_API_TICKER = 'https://blockchain.info/ticker?cors=true'
+const URL_GOOGLE_QRCODE = 'http://chart.apis.google.com/chart?chs=180x180&cht=qr&chl='
 
 export default {
-  name: 'hello',
+  name: 'invoice',
 
   data () {
     return {
       jpyPrice:       0,
       xemRate:        'レート取得中・・・',
       xemPrice:       0,
-      xembookUrl:     'http://13.113.193.148/xembook/lastprice2.json',
-      poloniexUrl:    'https://poloniex.com/public?command=returnTicker',
       qrcodeShow:     false,
-      qrcodeUrl:      'http://chart.apis.google.com/chart?chs=180x180&cht=qr&chl=',
       dolRate:        0,
       xemBTC:         0,
       nemAddress:     '',
       tranMessage:    '',
-      accountTransfers: [],
       dashbord:         [],
     }
   },
@@ -184,8 +159,8 @@ export default {
 
     // poloniexからXEM/BTC価格を取得
     try {
-      let res1 = await axios.get('https://poloniex.com/public?command=returnTicker')
-      let res2 = await axios.get('https://blockchain.info/ticker?cors=true')
+      let res1 = await axios.get(URL_PLONIEX_API_TICKER)
+      let res2 = await axios.get(URL_FIAT_API_TICKER)
 
       this.xemBTC = res1.data.BTC_XEM.last
       this.dolRate = res2.data.JPY.last
@@ -197,76 +172,16 @@ export default {
 
     // トランザクションを取得
     try {
-      var tranApi = getAccountTransfersURL(this.nemAddress);
+      var tranApi = nemWrapper.getAccountTransfersURL(this.nemAddress);
       let res = await axios.get(tranApi)
 
-      this.accountTransfers = res.data.data
-      var arrLen = res.data.data.length;
-      for (var i = 0; i < arrLen; i++) {
+      this.dashbord = nemWrapper.getDashbordList(res, this.nemAddress)
 
-        var tran = this.accountTransfers[i].transaction;
-        var meta = this.accountTransfers[i].meta;
-
-        var ts = tran.timeStamp;
-        var tp = '';
-        var am = 0;
-        var ul = '';
-        var cl = "";
-        var tran_amount = 0;
-
-        if (tran.type == 4100) {
-          tran = tran.otherTrans;
-        }
-      
-        if (tran.type == 257 || tran.type == 8193 ) {
-
-          var has_mosaic = false;
-
-          //モザイクが存在した場合
-          if (tran.mosaics) {
-            tran.mosaics.forEach(function(key) {
-              has_mosaic = true;
-              var mosaic = key;
-              if (mosaic.mosaicId.name == "xem" && mosaic.mosaicId.namespaceId == "nem"){
-                tran_amount = mosaic.quantity;
-              }
-            });
-          }
-
-          //通常送金
-          if (!has_mosaic) {
-            if (tran.type == 8193 ) {
-              tran_amount = tran.rentalFee;
-            } else {
-              tran_amount = tran.amount;
-            }
-          }
-
-          if(this.nemAddress != tran.recipient){
-            tp = '出金';
-            am = '- ' + ((tran_amount + tran.fee) / 1000000).toFixed(6);
-            cl = "text-danger";
-          } else {
-            tp = '入金';
-            am = '+ ' + (tran_amount / 1000000).toFixed(6);
-            cl = "text-success";
-          }
-          ul = 'http://explorer.nemchina.com/#/s_tx?hash=' + meta.hash.data;
-
-          this.dashbord.push({
-            timeStamp: ts,
-            type: tp,
-            amount: am,
-            url: ul,
-            color: cl
-          });
-        }
-      }
     } catch (error) {
       if(error.message == 'Request failed with status code 400'){
-          alert("入金先が正しくありません");
+          alert("入金先が正しくありません")
       } else {
-        alert(error);
+        alert(error)
         console.error(error)
       }
     }
@@ -282,22 +197,15 @@ export default {
 
   methods: {
     getXEMPrice: function () {
+        alert("請求書用のQRコードを出力します" );
+
         this.qrcodeShow = false;
-        var googleQRcode = 'http://chart.apis.google.com/chart?chs=180x180&cht=qr&chl=';
         var nemInvoice = '{"v":2,"type":2,"data":{"addr":"' + this.nemAddress + '","amount":' + this.xemPrice * 1000000 + ',"msg":"' + this.tranMessage + '"}}';
-        this.qrcodeUrl = googleQRcode + nemInvoice;
+        this.qrcodeUrl = URL_GOOGLE_QRCODE + nemInvoice;
         this.qrcodeShow = true;
 
         localStorage.setItem("lastNemAddress", this.nemAddress);
-
-        alert("請求書用のQRコードを出力します" );
     },
-
-    dispTimeStamp: function(timeStamp){
-      var NEM_EPOCH = Date.UTC(2015, 2, 29, 0, 6, 25, 0);
-      const d = new Date(NEM_EPOCH + (timeStamp * 1000));
-      return d.toLocaleString();
-    }
   }
 }
 </script>
