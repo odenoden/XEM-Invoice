@@ -1,3 +1,5 @@
+var nem = require("nem-sdk").default;
+
 const NODES = Array(
     "https://aqualife2.supernode.me",
     "https://aqualife3.supernode.me",
@@ -26,9 +28,19 @@ var dispTimeStamp = function(timeStamp) {
     return d.toLocaleString()
 }
 
+var getTargetNode = function() {
+    return NODES[Math.floor(Math.random() * NODES.length)] + NEM_PORT
+}
+
 exports.getAccountTransfersURL = function(address){
-    var targetNode =  NODES[Math.floor(Math.random() * NODES.length)] + NEM_PORT
+    var targetNode =  getTargetNode()
     var apl = targetNode + "/account/transfers/all?address=" + address
+    return apl
+}
+
+exports.getUnconfirmedTransactionURL = function(address){
+    var targetNode =  getTargetNode()
+    var apl = targetNode + "/account/unconfirmedTransactions?address=" + address
     return apl
 }
 

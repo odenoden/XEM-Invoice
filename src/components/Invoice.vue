@@ -12,7 +12,7 @@
             <div class="card-body">
               <form @submit="getXEMPrice">
                 <div class="form-group">
-                  <label>入金先</label><span class="help-block">（半角英数で40文字）</span>
+                  <label>入金先</label><span class="help-block">（半角英数で40文字 ハイフンなし）</span>
                   <input
                     v-model="nemAddress"
                     type="text"
@@ -27,7 +27,7 @@
                 </div>
                 <div class="form-group">
                   <label>価格(JPY)</label>
-                  <input v-model="jpyPrice" type="number" class="form-control" placeholder="(必須)日本円価格を入力して下さい" required>
+                  <input v-model="fiatPrice" type="number" class="form-control" placeholder="(必須)日本円価格を入力して下さい" required>
                 </div>
                 <button type="submit" class="btn btn-primary mb-2">請求書を作成</button>
               </form>
@@ -38,7 +38,10 @@
         <div class="col-md-6">
             <div class="card border-secondary mb-3">
             <div>
-              <h5 class="card-header">請求書</h5>
+              <h5 class="card-header">
+                請求書
+                <button v-on:click="getRateXem" class="btn btn-outline-primary btn-sm float-right">更新</button>
+              </h5>
             </div>
             <div class="card-body">
               <div class="row">
@@ -70,7 +73,7 @@
                   <img v-bind:src="qrcodeUrl" alt="xem請求書" width="200" height="200">
               </div>
               <div v-show="false">
-                <p>{{ xemBTC }}{{ dolRate }}</p>
+                <p>{{ xemBTC }}{{ fiatRate }}</p>
               </div>
             </div>
           </div>
@@ -79,7 +82,10 @@
 
       <div class="card border-secondary mb-3">
         <div class="card-header">
-          <h5>ダッシュボード</h5>
+          <h5>
+            ダッシュボード
+            <button v-on:click="getNemTransaction" class="btn btn-outline-primary btn-sm float-right">更新</button>
+          </h5>
           <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item">
               <a href="#tab1" class="nav-link active" data-toggle="tab">承認済み</a>
@@ -106,7 +112,7 @@
                     <td class="text-right" v-bind:class="entry.color">
                       {{entry.amount}}
                     </td>
-                    <td class="text-center" style="max-width:2em">
+                    <td class="text-center">
                       <a v-bind:href="entry.url" target="_blank">
                         <button class="btn btn-primary btn-sm">詳細</button>
                       </a>
@@ -131,9 +137,10 @@ import axios from 'axios';
 import Vue from 'vue';
 import { isNull } from 'util';
 import nemWrapper from '@/js/nem_wrapper'
+//import exchangeWrapper from '@/js/exchange_wrapper'
 
 const URL_PLONIEX_API_TICKER = 'https://poloniex.com/public?command=returnTicker'
-const URL_FIAT_API_TICKER = 'https://blockchain.info/ticker?cors=true'
+const URL_BLOCKCHAIN_API_TICKER = 'https://blockchain.info/ticker?cors=true'
 const URL_GOOGLE_QRCODE = 'http://chart.apis.google.com/chart?chs=180x180&cht=qr&chl='
 
 export default {
@@ -141,56 +148,38 @@ export default {
 
   data () {
     return {
-      jpyPrice:       0,
+      fiatPrice:       0,
       xemRate:        'レート取得中・・・',
       xemPrice:       0,
       qrcodeShow:     false,
-      dolRate:        0,
+      fiatRate:        0,
       xemBTC:         0,
       nemAddress:     '',
       tranMessage:    '',
       dashbord:         [],
+      dashbordError:  '',
     }
   },
 
-  async mounted () {
+  mounted () {
     // ユーザーが前回入力した値を取得
     this.nemAddress = localStorage.getItem("lastNemAddress");
 
     // poloniexからXEM/BTC価格を取得
     try {
-      let res1 = await axios.get(URL_PLONIEX_API_TICKER)
-      let res2 = await axios.get(URL_FIAT_API_TICKER)
-
-      this.xemBTC = res1.data.BTC_XEM.last
-      this.dolRate = res2.data.JPY.last
-
-      this.xemRate = Math.round(this.xemBTC * this.dolRate * 1000000) / 1000000;
-    } catch (e) {
-      console.error(e)
+      this.getRateXem();
+    } catch (error) {
+      console.error(error)
     }
 
     // トランザクションを取得
-    try {
-      var tranApi = nemWrapper.getAccountTransfersURL(this.nemAddress);
-      let res = await axios.get(tranApi)
-
-      this.dashbord = nemWrapper.getDashbordList(res, this.nemAddress)
-
-    } catch (error) {
-      if(error.message == 'Request failed with status code 400'){
-          alert("入金先が正しくありません")
-      } else {
-        alert(error)
-        console.error(error)
-      }
-    }
+    this.getNemTransaction()
   },
 
   updated () {
     if (this.xemBTC != 0) {
-      if (this.dolRate != 0) {
-        this.xemPrice = Math.round(this.jpyPrice / this.xemRate * 1000000) / 1000000;
+      if (this.fiatRate != 0) {
+        this.xemPrice = Math.round(this.fiatPrice / this.xemRate * 1000000) / 1000000;
       }
     }
   },
@@ -206,6 +195,41 @@ export default {
 
         localStorage.setItem("lastNemAddress", this.nemAddress);
     },
+
+    async getRateXem() {
+      try {
+        this.xemRate = 'レート取得中・・・'
+        this.xemBTC = 0
+        this.fiatRate = 0
+        this.xemPrice = 0
+
+        let res1 = await axios.get(URL_PLONIEX_API_TICKER)
+        let res2 = await axios.get(URL_BLOCKCHAIN_API_TICKER)
+
+        this.xemBTC = res1.data.BTC_XEM.last
+        this.fiatRate = res2.data['JPY'].last
+
+        this.xemRate = Math.round(this.xemBTC * this.fiatRate * 1000000) / 1000000;
+      } catch (error) {
+        console.error(error)
+      }
+    },
+
+    async getNemTransaction() {
+      try {
+        var tranApi = nemWrapper.getAccountTransfersURL(this.nemAddress);
+        let res = await axios.get(tranApi)
+
+        this.dashbord = nemWrapper.getDashbordList(res, this.nemAddress)
+      } catch (error) {
+        if(error.message == 'Request failed with status code 400'){
+            this.dashbordError = "入金先が正しくありません"
+        } else {
+          this.dashbordError = error
+          console.error(error)
+        }
+      }
+    }
   }
 }
 </script>
