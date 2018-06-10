@@ -10,7 +10,7 @@
               <h5 class="card-header">請求価格入力</h5>
             </div>
             <div class="card-body">
-              <form @submit="getXEMPrice">
+              <form v-on:submit.prevent="getPriceXEM">
                 <div class="form-group">
                   <label>入金先</label><span class="help-block">（半角英数で40文字 ハイフンなし）</span>
                   <input
@@ -26,7 +26,16 @@
                   <input v-model="tranMessage" type="text" class="form-control" placeholder="(任意)入金時のメッセージを入力して下さい">
                 </div>
                 <div class="form-group">
-                  <label>価格(JPY)</label>
+                  <div class="row">
+                    <div class="col col-sm-2">
+                      <label>価格</label>
+                    </div>
+                    <div class="col col-sm-3">
+                      <select v-model="currencyType" class="form-control form-control-sm">
+                        <option>JPY</option>
+                      </select>
+                    </div>
+                  </div>
                   <input v-model="fiatPrice" type="number" class="form-control" placeholder="(必須)日本円価格を入力して下さい" required>
                 </div>
                 <button type="submit" class="btn btn-primary mb-2">請求書を作成</button>
@@ -40,7 +49,7 @@
             <div>
               <h5 class="card-header">
                 請求書
-                <button v-on:click="getRateXem" class="btn btn-outline-primary btn-sm float-right">更新</button>
+                <button v-on:click="updateInvoice" class="btn btn-outline-primary btn-sm float-right">更新</button>
               </h5>
             </div>
             <div class="card-body">
@@ -158,22 +167,25 @@ export default {
       tranMessage:    '',
       dashbord:         [],
       dashbordError:  '',
+      currencyType:   '',
     }
   },
 
   mounted () {
     // ユーザーが前回入力した値を取得
     this.nemAddress = localStorage.getItem("lastNemAddress");
-
-    // poloniexからXEM/BTC価格を取得
-    try {
-      this.getRateXem();
-    } catch (error) {
-      console.error(error)
+    this.currencyType = localStorage.getItem("lastCurrencyType");
+    if (this.currencyType != '') {
+      this.currencyType = 'JPY'
     }
 
+    // poloniexからXEM/BTC価格を取得
+    this.getRateXem();
+
     // トランザクションを取得
-    this.getNemTransaction()
+    if (this.nemAddress != '') {
+      this.getNemTransaction()
+    }
   },
 
   updated () {
@@ -185,7 +197,11 @@ export default {
   },
 
   methods: {
-    getXEMPrice: function () {
+    async updateInvoice (){
+      await this.getRateXem()
+      this.getPriceXEM()
+    },
+    getPriceXEM: function () {
         alert("請求書用のQRコードを出力します" );
 
         this.qrcodeShow = false;
@@ -194,6 +210,7 @@ export default {
         this.qrcodeShow = true;
 
         localStorage.setItem("lastNemAddress", this.nemAddress);
+        localStorage.getItem("lastCurrencyType", this.currencyType);
     },
 
     async getRateXem() {
@@ -207,9 +224,10 @@ export default {
         let res2 = await axios.get(URL_BLOCKCHAIN_API_TICKER)
 
         this.xemBTC = res1.data.BTC_XEM.last
-        this.fiatRate = res2.data['JPY'].last
+        this.fiatRate = res2.data[this.currencyType].last
 
         this.xemRate = Math.round(this.xemBTC * this.fiatRate * 1000000) / 1000000;
+        this.xemPrice = Math.round(this.fiatPrice / this.xemRate * 1000000) / 1000000;
       } catch (error) {
         console.error(error)
       }

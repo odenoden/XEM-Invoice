@@ -2,10 +2,21 @@
   <div id="app">
     <nav class="navbar navbar-dark bg-dark">
       <a class="navbar-brand" href="#"><img src="./assets/logo.png" alt="Vue.js PWA" align="middle">XEM Invoice</a>
+
+      <div class="row">
+        <div class="col col-sm-5 text-white">
+          <label>Language</label>
+        </div>
+        <div class="col col-sm-7">
+          <select v-model="language" class="form-control form-control-sm">
+            <option>Japanese</option>
+          </select>
+        </div>
+      </div>
+<!--
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navMenu" aria-controls="navMenu" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
-
       <div class="collapse navbar-collapse" id="navMenu">
         <ul class="navbar-nav mr-auto">
           <li class="nav-item">
@@ -16,6 +27,7 @@
           </li>
         </ul>
       </div>
+-->
     </nav>
 
     <main>
@@ -26,7 +38,18 @@
 
 <script>
 export default {
-  name: 'app'
+  name: 'app',
+  data () {
+    return {
+      language:       'Japanese',
+    }
+  },
+  created (){
+
+  },
+  updated () {
+    localStorage.setItem("lastLanguage", this.language);
+  }
 }
 </script>
 
