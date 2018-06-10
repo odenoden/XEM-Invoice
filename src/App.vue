@@ -4,12 +4,12 @@
       <a class="navbar-brand" href="#"><img src="./assets/logo.png" alt="Vue.js PWA" align="middle">XEM Invoice</a>
 
       <div class="row">
-        <div class="col col-sm-5 text-white">
+        <div class="col text-white">
           <label>Language</label>
         </div>
-        <div class="col col-sm-7">
+        <div class="col">
           <select v-model="language" class="form-control form-control-sm">
-            <option>Japanese</option>
+            <option>日本語</option>
           </select>
         </div>
       </div>
@@ -41,7 +41,7 @@ export default {
   name: 'app',
   data () {
     return {
-      language:       'Japanese',
+      language:       '日本語',
     }
   },
   created (){

@@ -201,11 +201,12 @@ export default {
       await this.getRateXem()
       this.getPriceXEM()
     },
+    
     getPriceXEM: function () {
         alert("請求書用のQRコードを出力します" );
 
         this.qrcodeShow = false;
-        var nemInvoice = '{"v":2,"type":2,"data":{"addr":"' + this.nemAddress + '","amount":' + this.xemPrice * 1000000 + ',"msg":"' + this.tranMessage + '"}}';
+        let nemInvoice = '{"v":2,"type":2,"data":{"addr":"' + this.nemAddress + '","amount":' + this.xemPrice * 1000000 + ',"msg":"' + this.tranMessage + '"}}';
         this.qrcodeUrl = URL_GOOGLE_QRCODE + nemInvoice;
         this.qrcodeShow = true;
 
@@ -235,7 +236,7 @@ export default {
 
     async getNemTransaction() {
       try {
-        var tranApi = nemWrapper.getAccountTransfersURL(this.nemAddress);
+        let tranApi = nemWrapper.getAccountTransfersURL(this.nemAddress);
         let res = await axios.get(tranApi)
 
         this.dashbord = nemWrapper.getDashbordList(res, this.nemAddress)

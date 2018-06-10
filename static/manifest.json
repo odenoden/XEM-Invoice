@@ -1,6 +1,6 @@
 {
-  "name": "xem-invoice",
-  "short_name": "xem-invoice",
+  "name": "XEM Invoice",
+  "short_name": "XEM Invoice",
   "icons": [
     {
       "src": "./img/icons/android-chrome-192x192.png",
