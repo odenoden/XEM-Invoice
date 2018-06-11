@@ -1,4 +1,4 @@
-var nem = require("nem-sdk").default;
+//let nem = require("nem-sdk").default;
 
 const NODES = Array(
     "https://aqualife2.supernode.me",
@@ -22,42 +22,42 @@ const NEM_PORT = ":7891"
 
 const NEM_UNIT = 1000000
 
-var dispTimeStamp = function(timeStamp) {
-    var NEM_EPOCH = Date.UTC(2015, 2, 29, 0, 6, 25, 0)
+const dispTimeStamp = (timeStamp) => {
+    const NEM_EPOCH = Date.UTC(2015, 2, 29, 0, 6, 25, 0)
     const d = new Date(NEM_EPOCH + (timeStamp * 1000))
     return d.toLocaleString()
 }
 
-var getTargetNode = function() {
+const getTargetNode = () => {
     return NODES[Math.floor(Math.random() * NODES.length)] + NEM_PORT
 }
 
-exports.getAccountTransfersURL = function(address){
-    var targetNode =  getTargetNode()
-    var apl = targetNode + "/account/transfers/all?address=" + address
-    return apl
+exports.getAccountTransfersURL = (address) => {
+    const targetNode =  getTargetNode()
+    const ret = targetNode + "/account/transfers/all?address=" + address
+    return ret
 }
 
-exports.getUnconfirmedTransactionURL = function(address){
-    var targetNode =  getTargetNode()
-    var apl = targetNode + "/account/unconfirmedTransactions?address=" + address
-    return apl
+exports.getUnconfirmedTransactionURL = (address) => {
+    const targetNode =  getTargetNode()
+    const ret = targetNode + "/account/unconfirmedTransactions?address=" + address
+    return ret
 }
 
-exports.getDashbordList = function(tranJSON, address) {
-    var dashbordList = []
-    var arrLen = tranJSON.data.data.length
-    for (var i = 0; i < arrLen; i++) {
+exports.setDashbordList = (dashbordList, tranJsonData, address, unconfirmedFlag) => {
+    const arrLen = tranJsonData.data.data.length
+    for (let i = 0; i < arrLen; i++) {
 
-        var tran = tranJSON.data.data[i].transaction
-        var meta = tranJSON.data.data[i].meta
+        let tran = tranJsonData.data.data[i].transaction
+        let meta = tranJsonData.data.data[i].meta
 
-        var ts = dispTimeStamp(tran.timeStamp)
-        var tp = ''
-        var am = 0
-        var ul = ''
-        var cl = ''
-        var tran_amount = 0
+        let ts = dispTimeStamp(tran.timeStamp)
+        let tp = ''
+        let am = 0
+        let ul = ''
+        let cl = ''
+        let tran_amount = 0
+        let bgc = ''
 
         if (tran.type == 4100) {
             tran = tran.otherTrans
@@ -65,13 +65,13 @@ exports.getDashbordList = function(tranJSON, address) {
 
         if (tran.type == 257 || tran.type == 8193 ) {
 
-            var has_mosaic = false;
+            let has_mosaic = false;
 
             //モザイクが存在した場合
             if (tran.mosaics) {
                 tran.mosaics.forEach(function(key) {
                 has_mosaic = true
-                var mosaic = key
+                let mosaic = key
                 if (mosaic.mosaicId.name == "xem" && mosaic.mosaicId.namespaceId == "nem"){
                     tran_amount = mosaic.quantity
                 }
@@ -87,23 +87,30 @@ exports.getDashbordList = function(tranJSON, address) {
             }
         }
 
-        if(address != tran.recipient){
+        if (address != tran.recipient) {
             tp = '出金'
             am = '- ' + ((tran_amount + tran.fee) / NEM_UNIT).toFixed(6)
-            cl = "text-danger"
+            cl = 'text-danger'
         } else {
             tp = '入金'
             am = '+ ' + (tran_amount / NEM_UNIT).toFixed(6)
-            cl = "text-success"
+            cl = 'text-success'
         }
-        ul = 'http://explorer.nemchina.com/#/s_tx?hash=' + meta.hash.data;
+
+        if (unconfirmedFlag) {
+            bgc = 'table-warning';
+        } else {
+            ul = 'http://explorer.nemchina.com/#/s_tx?hash=' + meta.hash.data
+        }
 
         dashbordList.push({
             timeStamp: ts,
             type: tp,
             amount: am,
             url: ul,
-            color: cl
+            color: cl,
+            unconfirmed: unconfirmedFlag,
+            bgcolor: bgc
         });
         }
     }

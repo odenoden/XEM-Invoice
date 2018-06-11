@@ -66,7 +66,7 @@
                   現在のレート
                 </div>
                 <div class="col-md-8">
-                  <p>{{ xemRate }} 円 / XEM</p>
+                  <p>{{ xemRate }} {{currencyType}} / XEM</p>
                 </div>
               </div>
               <div class="row">
@@ -95,45 +95,36 @@
             ダッシュボード
             <button v-on:click="getNemTransaction" class="btn btn-outline-primary btn-sm float-right">更新</button>
           </h5>
-          <ul class="nav nav-tabs card-header-tabs">
-            <li class="nav-item">
-              <a href="#tab1" class="nav-link active" data-toggle="tab">承認済み</a>
-            </li>
-            <li class="nav-item">
-              <a href="#tab2" class="nav-link" data-toggle="tab">未承認</a>
-            </li>
-          </ul>
         </div>
         <div class="card-body m-0 p-2">
-          <div class="tab-content">
-            <div id="tab1" class="tab-pane active">
-              <table class="table table-hover table-bordered table-sm" style="max-width:30em">
-                <thead class="thead-light text-center">
-                  <tr>
-                    <th scope="col">日時</th>
-                    <th scope="col">価格(XEM)</th>
-                    <th scope="col"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="entry in dashbord">
-                    <td style="max-width:6em">{{entry.timeStamp}}</td>
-                    <td class="text-right" v-bind:class="entry.color">
-                      {{entry.amount}}
-                    </td>
-                    <td class="text-center">
-                      <a v-bind:href="entry.url" target="_blank">
-                        <button class="btn btn-primary btn-sm">詳細</button>
-                      </a>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div id="tab2" class="tab-pane">
-              開発中・・・。リリースまでしばらく待ってね。
-            </div>
-          </div>
+          <p>{{dashbordMessage}}</p>
+          <table class="table table-hover table-bordered table-sm" style="max-width:30em">
+            <thead class="thead-light text-center">
+              <tr>
+                <th scope="col">日時</th>
+                <th scope="col">価格(XEM)</th>
+                <th scope="col"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="entry in dashbord" v-bind:class="entry.bgcolor">
+                <td style="max-width:6em">
+                  <div v-if="entry.unconfirmed" style="font-weight: bold;">
+                      未承認
+                  </div>
+                  {{entry.timeStamp}}
+                </td>
+                <td class="text-right" v-bind:class="entry.color">
+                  {{entry.amount}}
+                </td>
+                <td class="text-center">
+                  <a v-bind:href="entry.url" target="_blank">
+                    <button class="btn btn-primary btn-sm">詳細</button>
+                  </a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -152,6 +143,23 @@ const URL_PLONIEX_API_TICKER = 'https://poloniex.com/public?command=returnTicker
 const URL_BLOCKCHAIN_API_TICKER = 'https://blockchain.info/ticker?cors=true'
 const URL_GOOGLE_QRCODE = 'http://chart.apis.google.com/chart?chs=180x180&cht=qr&chl='
 
+const getNowDateTime = () => {
+  //今日の日付データを変数hidukeに格納
+  const dt = new Date(); 
+
+  //年・月・日を取得する
+  const year = dt.getFullYear();
+  const month = dt.getMonth()+1;
+  const day = dt.getDate();
+
+  //時・分・秒を取得する
+  var hour = dt.getHours();
+  var minute = dt.getMinutes();
+  var second = dt.getSeconds();
+
+  return year + '/' + month + '/' + day + ' ' + hour + ':' + ('00' + minute).slice(-2) + ':' + ('00' + second).slice(-2)
+}
+
 export default {
   name: 'invoice',
 
@@ -166,7 +174,7 @@ export default {
       nemAddress:     '',
       tranMessage:    '',
       dashbord:         [],
-      dashbordError:  '',
+      dashbordMessage:  '',
       currencyType:   '',
     }
   },
@@ -191,7 +199,7 @@ export default {
   updated () {
     if (this.xemBTC != 0) {
       if (this.fiatRate != 0) {
-        this.xemPrice = Math.round(this.fiatPrice / this.xemRate * 1000000) / 1000000;
+        this.xemPrice = Math.round(this.fiatPrice / this.xemRate * 1000000) / 1000000
       }
     }
   },
@@ -201,17 +209,17 @@ export default {
       await this.getRateXem()
       this.getPriceXEM()
     },
-    
+
     getPriceXEM: function () {
-        alert("請求書用のQRコードを出力します" );
+        alert("請求書用のQRコードを出力します")
 
-        this.qrcodeShow = false;
-        let nemInvoice = '{"v":2,"type":2,"data":{"addr":"' + this.nemAddress + '","amount":' + this.xemPrice * 1000000 + ',"msg":"' + this.tranMessage + '"}}';
-        this.qrcodeUrl = URL_GOOGLE_QRCODE + nemInvoice;
-        this.qrcodeShow = true;
+        this.qrcodeShow = false
+        let nemInvoice = '{"v":2,"type":2,"data":{"addr":"' + this.nemAddress + '","amount":' + this.xemPrice * 1000000 + ',"msg":"' + this.tranMessage + '"}}'
+        this.qrcodeUrl = URL_GOOGLE_QRCODE + nemInvoice
+        this.qrcodeShow = true
 
-        localStorage.setItem("lastNemAddress", this.nemAddress);
-        localStorage.getItem("lastCurrencyType", this.currencyType);
+        localStorage.setItem("lastNemAddress", this.nemAddress)
+        localStorage.getItem("lastCurrencyType", this.currencyType)
     },
 
     async getRateXem() {
@@ -236,15 +244,25 @@ export default {
 
     async getNemTransaction() {
       try {
-        let tranApi = nemWrapper.getAccountTransfersURL(this.nemAddress);
-        let res = await axios.get(tranApi)
+        let dashbordList = []
 
-        this.dashbord = nemWrapper.getDashbordList(res, this.nemAddress)
+        // 未承認トランザクションを取得
+        let tranApi = nemWrapper.getUnconfirmedTransactionURL(this.nemAddress);
+        let res = await axios.get(tranApi)
+        this.dashbord = nemWrapper.setDashbordList(dashbordList, res, this.nemAddress, true)
+
+        // 承認済トランザクションを取得
+        tranApi = nemWrapper.getAccountTransfersURL(this.nemAddress);
+        res = await axios.get(tranApi)
+        this.dashbord = nemWrapper.setDashbordList(dashbordList, res, this.nemAddress, false)
+
+        // トランザクションの最終取得時刻を設定
+        this.dashbordMessage = '最終取得時刻：' + getNowDateTime()
       } catch (error) {
         if(error.message == 'Request failed with status code 400'){
-            this.dashbordError = "入金先が正しくありません"
+            this.dashbordMessage = "入金先が正しくありません"
         } else {
-          this.dashbordError = error
+          this.dashbordMessage = error
           console.error(error)
         }
       }
