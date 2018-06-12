@@ -176,7 +176,7 @@ export default {
     // ユーザーが前回入力した値を取得
     this.nemAddress = localStorage.getItem("lastNemAddress")
     this.currencyType = localStorage.getItem("lastCurrencyType")
-    if (this.currencyType === '') {
+    if (this.currencyType === null) {
       this.currencyType = 'JPY'
     }
 
