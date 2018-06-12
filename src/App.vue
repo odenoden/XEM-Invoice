@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <nav class="navbar navbar-dark bg-dark">
-      <a class="navbar-brand" href="#"><img src="./assets/logo.png" alt="Vue.js PWA" align="middle">XEM Invoice</a>
+      <a class="navbar-brand" href=""><img src="./assets/logo.png" alt="XEM Invoice" align="middle">XEM Invoice</a>
 
       <div class="row">
         <div class="col">

@@ -31,12 +31,14 @@
                       <label>価格</label>
                     </div>
                     <div class="col col-sm-3">
-                      <select v-model="currencyType" class="form-control form-control-sm">
-                        <option>JPY</option>
+                      <select v-model="currencyType"  class="form-control form-control-sm" lazy>
+                        <option v-for="option in currencyItems" v-bind:value="option.value">
+                          {{ option.text }}
+                        </option>
                       </select>
                     </div>
                   </div>
-                  <input v-model="fiatPrice" type="number" class="form-control" placeholder="(必須)日本円価格を入力して下さい" required>
+                  <input v-model="priceFiat" type="number" class="form-control" placeholder="(必須)日本円価格を入力して下さい" required>
                 </div>
                 <button type="submit" class="btn btn-primary mb-2">請求書を作成</button>
               </form>
@@ -66,7 +68,8 @@
                   現在のレート
                 </div>
                 <div class="col-md-8">
-                  <p>{{ xemRate }} {{currencyType}} / XEM</p>
+                  <p>{{ rateFiatToXem }} {{ currencyType }} / XEM</p>
+                  <p>{{ invoiceMessage }}</p>
                 </div>
               </div>
               <div class="row">
@@ -74,7 +77,7 @@
                   価格(XEM)
                 </div>
                 <div class="col-md-8">
-                  <p>{{ xemPrice }} XEM</p>
+                  <p>{{ priceXem }} XEM</p>
                 </div>
               </div>
               <!-- QRコードを表示 -->
@@ -82,7 +85,7 @@
                   <img v-bind:src="qrcodeUrl" alt="xem請求書" width="200" height="200">
               </div>
               <div v-show="false">
-                <p>{{ xemBTC }}{{ fiatRate }}</p>
+                <p>{{ rateXemToBtc }}{{ rateBtcToFiat }}</p>
               </div>
             </div>
           </div>
@@ -136,54 +139,44 @@
 import axios from 'axios';
 import Vue from 'vue';
 import { isNull } from 'util';
-import nemWrapper from '@/js/nem_wrapper'
-//import exchangeWrapper from '@/js/exchange_wrapper'
+import * as nemWrapper from '@/js/nem_wrapper'
+import * as commonWrapper from '@/js/common_wrapper'
 
 const URL_PLONIEX_API_TICKER = 'https://poloniex.com/public?command=returnTicker'
 const URL_BLOCKCHAIN_API_TICKER = 'https://blockchain.info/ticker?cors=true'
 const URL_GOOGLE_QRCODE = 'http://chart.apis.google.com/chart?chs=180x180&cht=qr&chl='
-
-const getNowDateTime = () => {
-  //今日の日付データを変数hidukeに格納
-  const dt = new Date(); 
-
-  //年・月・日を取得する
-  const year = dt.getFullYear();
-  const month = dt.getMonth()+1;
-  const day = dt.getDate();
-
-  //時・分・秒を取得する
-  var hour = dt.getHours();
-  var minute = dt.getMinutes();
-  var second = dt.getSeconds();
-
-  return year + '/' + month + '/' + day + ' ' + hour + ':' + ('00' + minute).slice(-2) + ':' + ('00' + second).slice(-2)
-}
 
 export default {
   name: 'invoice',
 
   data () {
     return {
-      fiatPrice:       0,
-      xemRate:        'レート取得中・・・',
-      xemPrice:       0,
-      qrcodeShow:     false,
-      fiatRate:        0,
-      xemBTC:         0,
+      priceFiat:      0,
+      priceXem:       0,
+      rateXemToBtc:   0,
+      rateBtcToFiat:  0,
+      rateFiatToXem:  'レート取得中・・・',
       nemAddress:     '',
       tranMessage:    '',
-      dashbord:         [],
-      dashbordMessage:  '',
       currencyType:   '',
+      qrcodeShow:     false,
+      invoiceMessage: '',
+      dashbordList:   [],
+      dashbordMessage:'',
+      currencyItems:  [
+        {text: 'JPY', value: 'JPY'},
+        {text: 'USD', value: 'USD'},
+        {text: 'EUR', value: 'EUR'},
+        {text: 'KRW', value: 'KRW'},
+      ],
     }
   },
 
   mounted () {
     // ユーザーが前回入力した値を取得
-    this.nemAddress = localStorage.getItem("lastNemAddress");
-    this.currencyType = localStorage.getItem("lastCurrencyType");
-    if (this.currencyType != '') {
+    this.nemAddress = localStorage.getItem("lastNemAddress")
+    this.currencyType = localStorage.getItem("lastCurrencyType")
+    if (this.currencyType === '') {
       this.currencyType = 'JPY'
     }
 
@@ -197,9 +190,11 @@ export default {
   },
 
   updated () {
-    if (this.xemBTC != 0) {
-      if (this.fiatRate != 0) {
-        this.xemPrice = Math.round(this.fiatPrice / this.xemRate * 1000000) / 1000000
+    if (this.rateXemToBtc != 0) {
+      if (this.rateBtcToFiat != 0) {
+        // 価格(XEM)を最新に更新
+        this.rateFiatToXem = Math.round(this.rateXemToBtc * this.rateBtcToFiat[this.currencyType].last * 1000000) / 1000000
+        this.priceXem = Math.round(this.priceFiat / this.rateFiatToXem * 1000000) / 1000000
       }
     }
   },
@@ -214,50 +209,55 @@ export default {
         alert("請求書用のQRコードを出力します")
 
         this.qrcodeShow = false
-        let nemInvoice = '{"v":2,"type":2,"data":{"addr":"' + this.nemAddress + '","amount":' + this.xemPrice * 1000000 + ',"msg":"' + this.tranMessage + '"}}'
+        let nemInvoice = '{"v":2,"type":2,"data":{"addr":"' + this.nemAddress + '","amount":' + this.priceXem * 1000000 + ',"msg":"' + this.tranMessage + '"}}'
         this.qrcodeUrl = URL_GOOGLE_QRCODE + nemInvoice
         this.qrcodeShow = true
 
         localStorage.setItem("lastNemAddress", this.nemAddress)
-        localStorage.getItem("lastCurrencyType", this.currencyType)
+        localStorage.setItem("lastCurrencyType", this.currencyType)
     },
 
     async getRateXem() {
       try {
-        this.xemRate = 'レート取得中・・・'
-        this.xemBTC = 0
-        this.fiatRate = 0
-        this.xemPrice = 0
+        // 初期化
+        this.rateFiatToXem = 'レート取得中・・・'
+        this.rateXemToBtc = 0
+        this.rateBtcToFiat = 0
+        this.priceXem = 0
 
+        // poloniexからXEMのBTC価格を取得
         let res1 = await axios.get(URL_PLONIEX_API_TICKER)
+        this.rateXemToBtc = res1.data.BTC_XEM.last
+
+        // blockchain.infoからBTCの法定価格を取得
         let res2 = await axios.get(URL_BLOCKCHAIN_API_TICKER)
+        this.rateBtcToFiat = res2.data
 
-        this.xemBTC = res1.data.BTC_XEM.last
-        this.fiatRate = res2.data[this.currencyType].last
-
-        this.xemRate = Math.round(this.xemBTC * this.fiatRate * 1000000) / 1000000;
-        this.xemPrice = Math.round(this.fiatPrice / this.xemRate * 1000000) / 1000000;
+        // レートの最終取得時刻を取得
+        this.invoiceMessage = '最終取得時刻：' + commonWrapper.getNowDateTime()
       } catch (error) {
+        this.invoiceMessage = '取引所(poloniex)からレートを取得できませんでした。'
         console.error(error)
       }
     },
 
     async getNemTransaction() {
       try {
-        let dashbordList = []
+        let list = []
 
         // 未承認トランザクションを取得
         let tranApi = nemWrapper.getUnconfirmedTransactionURL(this.nemAddress);
         let res = await axios.get(tranApi)
-        this.dashbord = nemWrapper.setDashbordList(dashbordList, res, this.nemAddress, true)
+        this.dashbord = nemWrapper.setDashbordList(list, res, this.nemAddress, true)
 
         // 承認済トランザクションを取得
         tranApi = nemWrapper.getAccountTransfersURL(this.nemAddress);
         res = await axios.get(tranApi)
-        this.dashbord = nemWrapper.setDashbordList(dashbordList, res, this.nemAddress, false)
+        this.dashbordList = nemWrapper.setDashbordList(list, res, this.nemAddress, false)
 
-        // トランザクションの最終取得時刻を設定
-        this.dashbordMessage = '最終取得時刻：' + getNowDateTime()
+        // トランザクションの最終取得時刻を取得
+        this.dashbordMessage = '最終取得時刻：' + commonWrapper.getNowDateTime()
+
       } catch (error) {
         if(error.message == 'Request failed with status code 400'){
             this.dashbordMessage = "入金先が正しくありません"
