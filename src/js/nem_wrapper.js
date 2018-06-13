@@ -3,11 +3,8 @@
 const NODES = Array(
     "https://aqualife2.supernode.me",
     "https://aqualife3.supernode.me",
-    // "https://beny.supernode.me", 調子悪い？
     "https://happy.supernode.me",
     "https://mnbhsgwbeta.supernode.me",
-    // "https://nemstrunk.supernode.me", 調子悪い？
-    // "https://nemstrunk2.supernode.me", 調子悪い？
     "https://nsm.supernode.me",
     "https://kohkei.supernode.me",
     "https://mttsukuba.supernode.me",
@@ -96,6 +93,7 @@ export function setDashbordList(dashbordList, tranJsonData, address, unconfirmed
             else {
                 ul = 'http://explorer.nemchina.com/#/s_tx?hash=' + meta.hash.data
             }
+            
             dashbordList.push({
                 timeStamp: ts,
                 type: tp,

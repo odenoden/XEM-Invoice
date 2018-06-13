@@ -63,13 +63,13 @@
                   <p>{{ nemAddress }}</p>
                 </div>
               </div>
+              <div v-bind:class="invoiceAlertClass" role="alert">{{invoiceMessage}}</div>
               <div class="row">
                 <div class="col-md-4">
                   現在のレート
                 </div>
                 <div class="col-md-8">
                   <p>{{ rateFiatToXem }} {{ currencyType }} / XEM</p>
-                  <p>{{ invoiceMessage }}</p>
                 </div>
               </div>
               <div class="row">
@@ -82,7 +82,7 @@
               </div>
               <!-- QRコードを表示 -->
               <div v-if="qrcodeShow" class="text-center">
-                  <img v-bind:src="qrcodeUrl" alt="xem請求書" width="200" height="200">
+                  <qriously v-bind:value="qrcodeText" :size="200" />
               </div>
               <div v-show="false">
                 <p>{{ rateXemToBtc }}{{ rateBtcToFiat }}</p>
@@ -100,7 +100,7 @@
           </h5>
         </div>
         <div class="card-body m-0 p-2">
-          <p>{{dashbordMessage}}</p>
+          <div v-bind:class="dashbordAlertClass" role="alert">{{dashbordMessage}}</div>
           <table class="table table-hover table-bordered table-sm" style="max-width:30em">
             <thead class="thead-light text-center">
               <tr>
@@ -138,9 +138,12 @@
 <script>
 import axios from 'axios';
 import Vue from 'vue';
+import VueQriously from 'vue-qriously'
 import { isNull } from 'util';
 import * as nemWrapper from '@/js/nem_wrapper'
 import * as commonWrapper from '@/js/common_wrapper'
+
+Vue.use(VueQriously)
 
 const URL_PLONIEX_API_TICKER = 'https://poloniex.com/public?command=returnTicker'
 const URL_BLOCKCHAIN_API_TICKER = 'https://blockchain.info/ticker?cors=true'
@@ -155,14 +158,18 @@ export default {
       priceXem:       0,
       rateXemToBtc:   0,
       rateBtcToFiat:  0,
-      rateFiatToXem:  'レート取得中・・・',
+      rateFiatToXem:  0,
       nemAddress:     '',
       tranMessage:    '',
       currencyType:   '',
+      qrcodeUrl:      '',
+      qrcodeText:     '',
       qrcodeShow:     false,
       invoiceMessage: '',
+      invoiceAlertClass: '',
       dashbordList:   [],
       dashbordMessage:'',
+      dashbordAlertClass: '',
       currencyItems:  [
         {text: 'JPY', value: 'JPY'},
         {text: 'USD', value: 'USD'},
@@ -195,6 +202,8 @@ export default {
         // 価格(XEM)を最新に更新
         this.rateFiatToXem = Math.round(this.rateXemToBtc * this.rateBtcToFiat[this.currencyType].last * 1000000) / 1000000
         this.priceXem = Math.round(this.priceFiat / this.rateFiatToXem * 1000000) / 1000000
+
+        this.qrcodeText = '{"v":2,"type":2,"data":{"addr":"' + this.nemAddress + '","amount":' + this.priceXem * 1000000 + ',"msg":"' + this.tranMessage + '"}}'
       }
     }
   },
@@ -202,17 +211,13 @@ export default {
   methods: {
     async updateInvoice (){
       await this.getRateXem()
-      this.getPriceXEM()
+      // this.getPriceXEM()
     },
 
     getPriceXEM: function () {
         alert("請求書用のQRコードを出力します")
-
         this.qrcodeShow = false
-        let nemInvoice = '{"v":2,"type":2,"data":{"addr":"' + this.nemAddress + '","amount":' + this.priceXem * 1000000 + ',"msg":"' + this.tranMessage + '"}}'
-        this.qrcodeUrl = URL_GOOGLE_QRCODE + nemInvoice
         this.qrcodeShow = true
-
         localStorage.setItem("lastNemAddress", this.nemAddress)
         localStorage.setItem("lastCurrencyType", this.currencyType)
     },
@@ -220,10 +225,12 @@ export default {
     async getRateXem() {
       try {
         // 初期化
-        this.rateFiatToXem = 'レート取得中・・・'
+        this.rateFiatToXem = 0
         this.rateXemToBtc = 0
         this.rateBtcToFiat = 0
         this.priceXem = 0
+        this.invoiceMessage = 'レート取得中・・・'
+        this.invoiceAlertClass = 'alert alert-info'
 
         // poloniexからXEMのBTC価格を取得
         let res1 = await axios.get(URL_PLONIEX_API_TICKER)
@@ -235,8 +242,12 @@ export default {
 
         // レートの最終取得時刻を取得
         this.invoiceMessage = '最終取得時刻：' + commonWrapper.getNowDateTime()
+        // メッセージのデザインを設定
+        this.invoiceAlertClass = 'alert alert-success'
+
       } catch (error) {
         this.invoiceMessage = '取引所(poloniex)からレートを取得できませんでした。'
+        this.invoiceAlertClass = 'alert alert-danger'
         console.error(error)
       }
     },
@@ -244,6 +255,10 @@ export default {
     async getNemTransaction() {
       try {
         let list = []
+
+        // 初期化
+        this.dashbordMessage = 'トランザクション取得中・・・'
+        this.dashbordAlertClass = 'alert alert-info'
 
         // 未承認トランザクションを取得
         let tranApi = nemWrapper.getUnconfirmedTransactionURL(this.nemAddress);
@@ -257,10 +272,13 @@ export default {
 
         // トランザクションの最終取得時刻を取得
         this.dashbordMessage = '最終取得時刻：' + commonWrapper.getNowDateTime()
+        // メッセージのデザインを設定
+        this.dashbordAlertClass = 'alert alert-success'
 
       } catch (error) {
+        this.dashbordAlertClass = 'alert alert-danger'
         if(error.message == 'Request failed with status code 400'){
-            this.dashbordMessage = "入金先が正しくありません"
+            this.dashbordMessage = '入金先が正しくありません'
         } else {
           this.dashbordMessage = error
           console.error(error)
