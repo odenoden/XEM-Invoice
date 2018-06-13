@@ -10,7 +10,7 @@
               <h5 class="card-header">請求価格入力</h5>
             </div>
             <div class="card-body">
-              <form v-on:submit.prevent="getPriceXEM">
+              <form v-on:submit.prevent="putXemQrcode">
                 <div class="form-group">
                   <label>入金先</label><span class="help-block">（半角英数で40文字 ハイフンなし）</span>
                   <input
@@ -192,7 +192,9 @@ export default {
 
     // トランザクションを取得
     if (this.nemAddress != '') {
-      this.getNemTransaction()
+      if (this.nemAddress != null) {
+        this.getNemTransaction()
+      }
     }
   },
 
@@ -203,6 +205,7 @@ export default {
         this.rateFiatToXem = Math.round(this.rateXemToBtc * this.rateBtcToFiat[this.currencyType].last * 1000000) / 1000000
         this.priceXem = Math.round(this.priceFiat / this.rateFiatToXem * 1000000) / 1000000
 
+        // QRコードのテキストを更新
         this.qrcodeText = '{"v":2,"type":2,"data":{"addr":"' + this.nemAddress + '","amount":' + this.priceXem * 1000000 + ',"msg":"' + this.tranMessage + '"}}'
       }
     }
@@ -211,12 +214,11 @@ export default {
   methods: {
     async updateInvoice (){
       await this.getRateXem()
-      // this.getPriceXEM()
+      // this.putXemQrcode()
     },
 
-    getPriceXEM: function () {
+    putXemQrcode: function () {
         alert("請求書用のQRコードを出力します")
-        this.qrcodeShow = false
         this.qrcodeShow = true
         localStorage.setItem("lastNemAddress", this.nemAddress)
         localStorage.setItem("lastCurrencyType", this.currencyType)
